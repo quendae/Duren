@@ -21,15 +21,29 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-          import base64, gzip
           p=Path('durniak.html')
           data=p.read_bytes()
           nl=b'\r\n' if b'\r\n' in data[:8000] else b'\n'
           marker=b'@media (orientation: landscape) and (max-height: 520px) and (max-width: 1000px) {'+nl
           if b'  .main-menu { place-items: start center;' not in data:
-              payload='H4sIAPMck2oC/3VT3W6CMBS+31OcS5dYA+o2xGTvUsoBm0HbtIeJW/buOyDOivOGhPKd8/0VgFUrtREtmg6+wTVSodCEbcghkPQECg2h34OTZalNncOr6/dgP9FXjT2KUw6yI7uHnyeIduV5gZX1yDu1CUg5vAxjhfUlenHUJR2mTec5HhFK+pLx08dWm8Vrlrh+CUo2apEmyecRBKSZ65+fIz0710O65UcWMXhZ6o49DB/uON5hhScsvD0yXakDu2YbxhqMoa30H1c5m3HRAXV9oMsbI2ptckjGCGA9nFXWkAj6C/NR6R33Yc07I9B6zKVB4pBFcFKNnlYptvFo6ArS1AxxXkg37DiBtxnn7pZSKtLWBB6rvS4F98peCYWyTdcazsejQ0mLzZLjbmW/SJZp5Yd4a+mmzq7bio7ImkEDt3yJYpsMoL82eOQs6gHhmuFwQzZ1NCtuNw8z/VfL+UWrUVYMn0lvpKk7WePjJFgKKxnHRu/ZtWFB1k23dfIZnfzDwTXO5GSPkNigouHHu8svNpPcjgcMgWsV2lR21sYZGsue38pJyi+ZsWz9+QMAAA='
-              css=gzip.decompress(base64.b64decode(payload)).replace(b'\n',nl)
-              data=data.replace(marker,marker+css,1)
+              lines=[
+                  b'  .main-menu { place-items: start center; padding: 6px; overflow-y: auto; }',
+                  b'  .main-menu::before { inset: 5px; border-width: 6px; }',
+                  b'  .menu-card { width: min(680px, calc(100vw - 18px)); padding: 9px 14px 8px; border-radius: 14px; }',
+                  b'  .menu-card > .eyebrow { display: none; }',
+                  b'  .menu-mark { width: 34px; height: 34px; margin: 0 auto 2px; font-size: 18px; }',
+                  b'  .menu-card h2 { font-size: 25px; letter-spacing: .1em; }',
+                  b'  .menu-subtitle { margin: 3px 0 7px; font-size: 9px; }',
+                  b'  .menu-actions { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; }',
+                  b'  .menu-button { min-height: 40px; padding: 5px 7px; grid-template-columns: 20px minmax(0,1fr) 14px; border-radius: 9px; font-size: 11px; }',
+                  b'  .menu-button .menu-icon { font-size: 15px; }',
+                  b'  .menu-language { grid-template-columns: 1fr 145px; gap: 8px; margin-top: 6px; padding-top: 6px; }',
+                  b'  .menu-language span { font-size: 8px; }',
+                  b'  .menu-language select { padding: 5px 7px; font-size: 10px; }',
+                  b'  .menu-session-info { min-height: 10px; margin-top: 2px; font-size: 8px; }',
+              ]
+              if marker not in data: raise SystemExit('Landscape marker not found')
+              data=data.replace(marker,marker+nl.join(lines)+nl,1)
               p.write_bytes(data)
           PY
       - name: Commit patch
