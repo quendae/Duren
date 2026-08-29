@@ -1,0 +1,33 @@
+name: Multiplayer regression
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  multiplayer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax checks
+        run: |
+          node --check multiplayer.js
+          node --check mp/core.js
+          node --check mp/game.js
+          node --check mp/network.js
+          node --check cloudflare-signaling/src/worker.js
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Multiplayer gameplay and responsive regression
+        run: node tests/multiplayer_smoke.mjs
