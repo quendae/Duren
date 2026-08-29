@@ -61,9 +61,10 @@
     D.renderLobby({room:mp.roomCode,seats:[{seat:0,name:D.tr('host'),kind:'human',connected:true,host:true},{seat:1,name:mp.name,kind:'human',connected:false},{seat:2,name:'',kind:'empty',connected:false}],canStart:false});
   }
   async function createGuestOffer(guestId){
-    const pc=D.newPeerConnection(),channel=pc.createDataChannel('durak-game',{ordered:true});mp.peer={guestId,pc,channel,seat:null,connected:false};
+    const pc=D.newPeerConnection(),channel=pc.createDataChannel('durak-game',{ordered:true});mp.peer={guestId,pc,channel,seat:null,connected:false,connectTimer:null};
+    mp.peer.connectTimer=setTimeout(()=>{if(!mp.peer?.connected&&!mp.inGame){D.setStatus('mp-lobby-status',D.tr('webRtcFailed'),true);try{pc.close();}catch{}}},12000);
     pc.addEventListener('connectionstatechange',()=>{if(['failed','disconnected','closed'].includes(pc.connectionState)&&mp.inGame&&!mp.closeExpected)D.showDisconnect(D.tr('hostGone'));});
-    channel.addEventListener('open',()=>{mp.peer.connected=true;D.safeSend(channel,{type:'hello',name:mp.name});mp.socket?.send(JSON.stringify({type:'connected'}));D.safeSend(channel,{type:'sync-request'});});
+    channel.addEventListener('open',()=>{clearTimeout(mp.peer.connectTimer);mp.peer.connectTimer=null;mp.peer.connected=true;D.safeSend(channel,{type:'hello',name:mp.name});mp.socket?.send(JSON.stringify({type:'connected'}));D.safeSend(channel,{type:'sync-request'});});
     channel.addEventListener('message',onGuestData);channel.addEventListener('close',()=>{if(mp.inGame&&!mp.closeExpected)D.showDisconnect(D.tr('hostGone'));});
     await pc.setLocalDescription(await pc.createOffer());await D.waitIceComplete(pc);mp.socket.send(JSON.stringify({type:'offer',sdp:pc.localDescription}));
   }
@@ -71,14 +72,15 @@
   async function onHostSignal(event){const msg=D.parseMessage(event.data);if(!msg)return;if(msg.type==='offer'){try{await acceptGuestOffer(msg);}catch(e){console.error('[Durak MP] host offer',e);mp.socket?.send(JSON.stringify({type:'reject',guestId:msg.guestId,reason:'webrtc_failed'}));}}else if(msg.type==='guest-left')removePeer(msg.guestId,false);}
   async function acceptGuestOffer(msg){
     const seat=allocateSeat();if(!seat){mp.socket?.send(JSON.stringify({type:'reject',guestId:msg.guestId,reason:'room_full'}));return;}
-    const pc=D.newPeerConnection(),peer={guestId:msg.guestId,nick:msg.nick||D.tr('human'),seat,pc,channel:null,connected:false};mp.peers.set(peer.guestId,peer);
+    const pc=D.newPeerConnection(),peer={guestId:msg.guestId,nick:msg.nick||D.tr('human'),seat,pc,channel:null,connected:false,connectTimer:null};mp.peers.set(peer.guestId,peer);
+    peer.connectTimer=setTimeout(()=>{if(!peer.connected&&!mp.inGame){try{mp.socket?.send(JSON.stringify({type:'reject',guestId:peer.guestId,reason:'webrtc_failed'}));}catch{}removePeer(peer.guestId,false);}},12000);
     pc.addEventListener('datachannel',e=>bindHostChannel(peer,e.channel));pc.addEventListener('connectionstatechange',()=>{if(['failed','disconnected','closed'].includes(pc.connectionState))removePeer(peer.guestId,mp.inGame);});
     await pc.setRemoteDescription(msg.sdp);await pc.setLocalDescription(await pc.createAnswer());await D.waitIceComplete(pc);mp.socket?.send(JSON.stringify({type:'answer',guestId:peer.guestId,seat,sdp:pc.localDescription}));D.renderLobby();
   }
-  function bindHostChannel(peer,channel){peer.channel=channel;channel.addEventListener('open',()=>{peer.connected=true;D.safeSend(channel,{type:'welcome',seat:peer.seat,...D.lobbySnapshot()});D.broadcastLobby();});channel.addEventListener('message',e=>onHostData(peer,e));channel.addEventListener('close',()=>removePeer(peer.guestId,mp.inGame));}
+  function bindHostChannel(peer,channel){peer.channel=channel;channel.addEventListener('open',()=>{clearTimeout(peer.connectTimer);peer.connectTimer=null;peer.connected=true;D.safeSend(channel,{type:'welcome',seat:peer.seat,...D.lobbySnapshot()});D.broadcastLobby();});channel.addEventListener('message',e=>onHostData(peer,e));channel.addEventListener('close',()=>removePeer(peer.guestId,mp.inGame));}
   function allocateSeat(){const occupied=new Set([...mp.peers.values()].map(p=>p.seat));for(const seat of [1,2])if(seat!==mp.botSeat&&!occupied.has(seat))return seat;return null;}
   function compactLobbySeats(){if(mp.inGame)return;const list=[...mp.peers.values()].filter(p=>p.connected).sort((a,b)=>a.seat-b.seat);list.forEach((p,i)=>{const desired=i+1;if(desired===2&&mp.botSeat===2)return;if(p.seat!==desired){p.seat=desired;D.safeSend(p.channel,{type:'seat-update',seat:desired});}});}
-  function removePeer(id,duringGame){const p=mp.peers.get(id);if(!p)return;try{p.pc?.close();}catch{}mp.peers.delete(id);if(duringGame){D.showGameMenu();mp.paused=true;D.showDisconnect(D.tr('guestGone'));return;}compactLobbySeats();D.broadcastLobby();}
+  function removePeer(id,duringGame){const p=mp.peers.get(id);if(!p)return;clearTimeout(p.connectTimer);try{p.pc?.close();}catch{}mp.peers.delete(id);if(duringGame){D.showGameMenu();mp.paused=true;D.showDisconnect(D.tr('guestGone'));return;}compactLobbySeats();D.broadcastLobby();}
 
   async function onGuestSignal(event){
     const msg=D.parseMessage(event.data);if(!msg)return;
