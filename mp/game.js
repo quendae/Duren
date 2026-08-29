@@ -12,9 +12,11 @@
   }
   D.installGameHooks=()=>{
     const w=D.frame.contentWindow;
-    if(!w?.Durak?.game||mp.hooksInstalled)return;
+    if(!w?.Durak?.game)return;
     mp.frameWindow=w; mp.game=w.Durak.game;
     const G=w.Durak;
+    if(G.ui.__durakMpHooked){mp.hooksInstalled=true;return;}
+    Object.defineProperty(G.ui,'__durakMpHooked',{value:true});
     mp.originalRender=G.ui.render.bind(G.ui);
     G.ui.render=function(state){ mp.originalRender(state); decorateHumans(state); if(mp.role==='host'&&mp.inGame&&!mp.paused&&state===G.game.state)D.queueBroadcast(); };
     mp.originalBot={chooseAttack:G.bot.chooseAttack,chooseThrowIn:G.bot.chooseThrowIn,chooseDefense:G.bot.chooseDefense};
