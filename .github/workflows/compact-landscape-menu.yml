@@ -1,0 +1,43 @@
+name: Compact landscape menu
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/compact-landscape-menu.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch menu layout
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import base64, gzip
+          p=Path('durniak.html')
+          data=p.read_bytes()
+          nl=b'\r\n' if b'\r\n' in data[:8000] else b'\n'
+          marker=b'@media (orientation: landscape) and (max-height: 520px) and (max-width: 1000px) {'+nl
+          if b'  .main-menu { place-items: start center;' not in data:
+              payload='H4sIAPMck2oC/3VT3W6CMBS+31OcS5dYA+o2xGTvUsoBm0HbtIeJW/buOyDOivOGhPKd8/0VgFUrtREtmg6+wTVSodCEbcghkPQECg2h34OTZalNncOr6/dgP9FXjT2KUw6yI7uHnyeIduV5gZX1yDu1CUg5vAxjhfUlenHUJR2mTec5HhFK+pLx08dWm8Vrlrh+CUo2apEmyecRBKSZ65+fIz0710O65UcWMXhZ6o49DB/uON5hhScsvD0yXakDu2YbxhqMoa30H1c5m3HRAXV9oMsbI2ptckjGCGA9nFXWkAj6C/NR6R33Yc07I9B6zKVB4pBFcFKNnlYptvFo6ArS1AxxXkg37DiBtxnn7pZSKtLWBB6rvS4F98peCYWyTdcazsejQ0mLzZLjbmW/SJZp5Yd4a+mmzq7bio7ImkEDt3yJYpsMoL82eOQs6gHhmuFwQzZ1NCtuNw8z/VfL+UWrUVYMn0lvpKk7WePjJFgKKxnHRu/ZtWFB1k23dfIZnfzDwTXO5GSPkNigouHHu8svNpPcjgcMgWsV2lR21sYZGsue38pJyi+ZsWz9+QMAAA='
+              css=gzip.decompress(base64.b64decode(payload)).replace(b'\n',nl)
+              data=data.replace(marker,marker+css,1)
+              p.write_bytes(data)
+          PY
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet -- durniak.html; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add durniak.html
+          git commit -m "Compact main menu on phone landscape"
+          git push
