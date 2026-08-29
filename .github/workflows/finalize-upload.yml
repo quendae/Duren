@@ -1,0 +1,46 @@
+name: Finalize game upload
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/finalize-upload.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rebuild game file
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .upload-parts/xz-00.b64 .upload-parts/xz-01.b64 .upload-parts/xz-02.b64 .upload-parts/xz-03.b64 > /tmp/durniak.html.xz.b64
+          base64 -d /tmp/durniak.html.xz.b64 > /tmp/durniak.html.xz
+          xz -dc /tmp/durniak.html.xz > durniak.html
+          echo 'd7961afa9adcffae360fc85614e7816d73b9f0a9c222b5b6de18ef4076972e92  durniak.html' | sha256sum -c -
+
+      - name: Clean temporary upload files
+        shell: bash
+        run: |
+          rm -rf .upload-parts
+          rm -f .github/workflows/finalize-upload.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+
+      - name: Commit final game
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Add Dureń offline game'
+          git push origin HEAD:main
