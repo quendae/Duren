@@ -21,7 +21,7 @@ const server = http.createServer(async (req,res) => {
 });
 await new Promise((resolve) => server.listen(0,'127.0.0.1',resolve));
 const port = server.address().port;
-const base = `http://127.0.0.1:${port}/index.html`;
+const base = `http://127.0.0.1:${port}/`;
 const browser = await chromium.launch({ headless:true });
 
 async function ready(page) {
@@ -33,8 +33,30 @@ try {
   for (const viewport of [{width:1440,height:900},{width:1024,height:768},{width:390,height:844},{width:844,height:390}]) {
     const page = await browser.newPage({viewport});
     await ready(page);
+    const shell = await page.evaluate(() => {
+      const button = document.querySelector('#mp-launch');
+      const style = getComputedStyle(button);
+      const rect = button.getBoundingClientRect();
+      return {
+        build: document.querySelector('meta[name="duren-client-build"]')?.content,
+        display: style.display,
+        position: style.position,
+        zIndex: Number(style.zIndex),
+        width: rect.width,
+        height: rect.height,
+      };
+    });
+    assert.equal(shell.build,'20260906-clean1','wrong entry-point build loaded');
+    assert.notEqual(shell.display,'none','online button hidden');
+    assert.equal(shell.position,'fixed','multiplayer stylesheet not loaded');
+    assert.ok(shell.zIndex >= 1000,'online button is below the game iframe');
+    assert.ok(shell.width > 50 && shell.height > 30,'online button has invalid geometry');
+
     await page.click('#mp-launch');
-    const layout = await page.evaluate(() => { const card=document.querySelector('.mp-card').getBoundingClientRect(); return {cardLeft:card.left,cardRight:card.right,width:innerWidth,overlayVisible:!document.querySelector('#mp-overlay').classList.contains('hidden')}; });
+    const layout = await page.evaluate(() => {
+      const card=document.querySelector('.mp-card').getBoundingClientRect();
+      return {cardLeft:card.left,cardRight:card.right,width:innerWidth,overlayVisible:!document.querySelector('#mp-overlay').classList.contains('hidden')};
+    });
     assert.equal(layout.overlayVisible,true,`lobby hidden at ${viewport.width}x${viewport.height}`);
     assert.ok(layout.cardLeft >= -1 && layout.cardRight <= layout.width + 1,`lobby overflows horizontally at ${viewport.width}x${viewport.height}`);
     await page.close();
