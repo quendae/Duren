@@ -53,8 +53,15 @@
     const peer=D.peerForSeat(actor);if(!peer)return false;if(s.phase==='attack')return D.queueRemoteAction(peer,'play-card',{cardId:s.hands[actor][0]?.id});if(s.phase==='throwin')return D.queueRemoteAction(peer,'pass',{});if(s.phase==='defense'){const pairIndex=s.table.findIndex(pair=>!pair.defense),pair=s.table[pairIndex],beat=pair?mp.frameWindow.Durak.rules.beatOptions(s.hands[actor],pair.attack,s.trump)[0]:null;return beat?D.queueRemoteAction(peer,'beat',{cardId:beat.id,pairIndex}):D.queueRemoteAction(peer,'take',{});}return false;
   };
   async function startHostGameForTest({guestCount=1,bot=false,difficulty='normal'}={}){
-    D.installGameHooks();D.resetNetworkOnly();mp.closeExpected=false;Object.assign(mp,{fakeTestMode:true,active:true,role:'host',name:'Host',roomCode:'TEST-ROOM',botSeat:bot?2:null,botDifficulty:difficulty});
-    for(let i=1;i<=Math.min(2,guestCount);i++){const channel={readyState:'open',send(){},close(){}};mp.peers.set(`test-${i}`,{guestId:`test-${i}`,sessionId:`test-${i}`,nick:`Human ${i}`,seat:i,connected:true,channel,pc:{close(){}}});}
+    D.installGameHooks();D.resetNetworkOnly();mp.closeExpected=false;
+    const hostId='test-host';
+    const players=[{id:hostId,nickname:'Host',connected:true}];
+    Object.assign(mp,{fakeTestMode:true,active:true,role:'host',name:'Host',roomCode:'TEST-ROOM',hostSessionId:hostId,botSeat:bot?2:null,botDifficulty:difficulty,roomObj:{id:'TEST-ROOM',game:'duren',ownerSessionId:hostId,players,minPlayers:2,maxPlayers:3,status:guestCount>=2?'ready':'waiting'}});
+    for(let i=1;i<=Math.min(2,guestCount);i++){
+      const id=`test-${i}`,channel={readyState:'open',send(){},close(){}};
+      players.push({id,nickname:`Human ${i}`,connected:true});
+      mp.peers.set(id,{guestId:id,sessionId:id,nick:`Human ${i}`,seat:i,connected:true,channel,pc:{close(){}}});
+    }
     D.renderLobby();return D.startHostGame();
   }
   window.DurakMultiplayer={
