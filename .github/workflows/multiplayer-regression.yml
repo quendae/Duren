@@ -23,11 +23,19 @@ jobs:
           node --check multiplayer.js
           node --check mp/core.js
           node --check mp/game.js
-          node --check mp/network.js
-          node --check cloudflare-signaling/src/worker.js
+          node --check mp/network-server.js
+          node --check mp/shared-finalize.js
+          grep -q 'network-server.js?v=20260906-shared1' durniak.html
+          ! grep -q '<script src="mp/network.js' durniak.html
+          ! grep -q 'RTCPeerConnection' mp/network-server.js
+          grep -q 'wss://api.qqnd.fyi/api/v1/ws' mp/network-server.js
+          grep -q "type: 'game.state.commit'" mp/network-server.js
+          grep -q "type: 'game.state.publish'" mp/network-server.js
       - name: Install Playwright
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
       - name: Multiplayer gameplay and responsive regression
         run: node tests/multiplayer_smoke.mjs
+      - name: Shared QQND server browser smoke
+        run: node tests/shared_server_smoke.mjs
