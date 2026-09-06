@@ -1,79 +1,54 @@
 # Dureń / Durak
 
-**Klasyczny Dureń działający całkowicie offline w przeglądarce.**
+Przeglądarkowa wersja klasycznego Durnia na 36 kart, z trybem offline i multiplayerem online.
 
 [English](README.md) · [Polski](README.pl.md) · [Deutsch](README.de.md) · [Русский](README.ru.md)
 
-Nie trzeba nic instalować, uruchamiać serwera ani zakładać konta. Cała gra mieści się w jednym pliku `durniak.html` — pobierz go, otwórz w nowoczesnej przeglądarce i graj.
+## Funkcje
 
-## Co znajduje się w grze
+- talia 36 kart od 6 do Asa
+- 1–3 przeciwników komputerowych offline
+- poziomy botów: Łatwy / Normalny / Trudny / Ekspert
+- opcjonalne przerzucanie / perewod
+- opcjonalny limit sześciu kart
+- podpowiedzi dla początkujących i samouczek
+- responsywny interfejs
+- języki: polski, angielski, niemiecki i rosyjski
+- pokoje online przez wspólny serwer QQND
+- multiplayer dla 2 graczy, 3 graczy oraz 2 graczy + bot
+- reconnect z 60-sekundowym czasem na powrót
 
-- Klasyczna talia Duraka: **36 kart od 6 do Asa**
-- Jeden gracz i **1–3 przeciwników komputerowych**
-- Osobny poziom trudności dla każdego bota: **Łatwy, Normalny, Trudny, Ekspert**
-- Opcjonalne **przerzucanie / perewod**
-- Opcjonalny limit sześciu kart w ataku
-- Możliwość wyboru, czy dorzucają wszyscy, czy tylko atakujący
-- Tryb początkującego z podświetlaniem legalnych kart i podpowiedziami
-- Samouczek krok po kroku z prowadzoną rozgrywką próbną
-- Historia rozdania i zasady dostępne podczas gry
-- Animacje kart i proste dźwięki stołu
-- Trzy prędkości ruchów botów
-- Automatyczny zapis lokalny i możliwość kontynuowania partii
-- Interfejs dopasowujący się do mniejszych ekranów
-- Języki: **polski, angielski, niemiecki i rosyjski**
+## Uruchomienie
 
-## Jak uruchomić
+W wersji hostowanej punktem wejścia jest:
 
-1. Pobierz [`durniak.html`](durniak.html).
-2. Otwórz plik w nowoczesnej przeglądarce internetowej.
-3. Wybierz **Nowa gra** albo zacznij od **Jak grać**, jeśli dopiero poznajesz Duraka.
+```text
+index.html
+```
 
-I tyle. Po pobraniu pliku gra nie wymaga internetu ani żadnych zewnętrznych zależności.
+Wymagany zestaw runtime:
 
-## Zasady w skrócie
+```text
+index.html
+durniak-offline.html
+multiplayer.css
+multiplayer.js
+mp/
+  core.js
+  game.js
+  network-server.js
+```
 
-Każdy zaczyna z sześcioma kartami. Jedna odkryta karta leży pod talonem i wyznacza atut na całe rozdanie.
+`index.html` jest wejściem do wersji online. `durniak-offline.html` zawiera silnik i UI samej gry i można go nadal otworzyć bezpośrednio do gry offline.
 
-Atakujący wykłada kartę. Obrońca musi przebić ją wyższą kartą w tym samym kolorze albo atutem. Atut można przebić tylko wyższym atutem. Kolejne karty ataku można dorzucać, jeśli ich ranga znajduje się już na stole.
+## Architektura multiplayer
 
-Jeśli obrońca nie może albo nie chce bić, bierze karty. Po zakończeniu tury gracze uzupełniają ręce do sześciu kart, dopóki w talonie są karty. Po wyczerpaniu talonu gracz, który pozbędzie się całej ręki, wychodzi z gry.
+Tryb online łączy się przez WebSocket ze wspólnym backendem QQND pod `api.qqnd.fyi`. W repozytorium nie ma już Cloudflare Workera ani transportu WebRTC.
 
-Ostatni gracz, któremu zostały karty, zostaje **Durniem**.
+Duren jest obecnie host-authoritative: przeglądarka hosta wykonuje zasady i wysyła każdemu zdalnemu graczowi prywatny widok stanu. Kolejnym etapem będzie przeniesienie pełnego silnika zasad na backend.
 
-## Poziomy botów
+## Testy
 
-Poziomy trudności nie różnią się wyłącznie szybkością ruchów. Wyższe poziomy korzystają z coraz mocniejszych heurystyk.
+GitHub Actions uruchamia regresję rozgrywki, testy responsywności oraz smoke test klienta wspólnego serwera QQND.
 
-- **Łatwy** — gra celowo luźniej i częściowo losowo.
-- **Normalny** — preferuje tanie ataki i rozsądną obronę.
-- **Trudny** — bierze pod uwagę wartość kart, powtarzające się rangi i stan talonu.
-- **Ekspert** — dodatkowo szacuje niewidoczne karty, ryzyko obrony i tempo końcówki.
-
-Każdy bot przy stole może mieć inny poziom.
-
-## Zasady dodatkowe
-
-Przed rozpoczęciem gry można dostosować kilka popularnych wariantów Duraka:
-
-- **Dorzucają wszyscy** — po wyłączeniu kolejne karty może dokładać tylko gracz, który rozpoczął atak.
-- **Przerzucanie (perewod)** — obrońca, który jeszcze niczego nie przebił, może przekazać atak następnemu graczowi kartą tej samej rangi.
-- **Limit sześciu kart** — można go wyłączyć, aby ataki były mniej ograniczone.
-
-## Zapis i prywatność
-
-Ustawienia, statystyki i — jeśli zapis jest włączony — aktualna partia są przechowywane lokalnie w przeglądarce przez `localStorage`.
-
-Gra nie musi wysyłać niczego na serwer. Wyczyszczenie danych witryny w przeglądarce może również usunąć zapis partii.
-
-## Technicznie
-
-Projekt celowo pozostaje prosty do uruchomienia i przenoszenia:
-
-- jeden samowystarczalny plik HTML
-- zwykły HTML, CSS i JavaScript
-- bez procesu budowania
-- bez frameworka
-- bez zewnętrznych zasobów wymaganych podczas gry
-
-Dzięki temu można trzymać grę na komputerze, pendrivie albo w dowolnym innym miejscu i uruchamiać ją całkowicie offline.
+Szczegóły wdrożenia są w [DEPLOY_MULTIPLAYER.md](DEPLOY_MULTIPLAYER.md).
