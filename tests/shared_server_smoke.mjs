@@ -9,7 +9,7 @@ const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; char
 const server = http.createServer(async (req,res) => {
   try {
     const url = new URL(req.url, 'http://127.0.0.1');
-    const rel = url.pathname === '/' ? '/durniak.html' : url.pathname;
+    const rel = url.pathname === '/' ? '/index.html' : url.pathname;
     const file = path.join(root, rel.replace(/^\/+/,''));
     if (!file.startsWith(root)) throw new Error('bad path');
     const data = await fs.readFile(file);
@@ -21,7 +21,7 @@ const server = http.createServer(async (req,res) => {
 });
 await new Promise((resolve) => server.listen(0,'127.0.0.1',resolve));
 const port = server.address().port;
-const base = `http://127.0.0.1:${port}/durniak.html`;
+const base = `http://127.0.0.1:${port}/index.html`;
 const browser = await chromium.launch({ headless:true });
 
 const HOST_ID = '11111111-1111-4111-8111-111111111111';
