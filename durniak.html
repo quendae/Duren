@@ -27,7 +27,7 @@
       </header>
 
       <div id="mp-home" class="mp-view">
-        <p class="mp-lead" data-mp-i18n="lead">Utwórz pokój albo dołącz kodem. Rozgrywka korzysta ze wspólnego serwera QQND.</p>
+        <p class="mp-lead" data-mp-i18n="lead">Utwórz pokój, dołącz kodem albo wybierz publiczny stół. Rozgrywka korzysta ze wspólnego serwera QQND.</p>
         <label class="mp-field">
           <span data-mp-i18n="name">Nazwa gracza</span>
           <input id="mp-name" maxlength="20" autocomplete="nickname" value="Gracz">
@@ -57,7 +57,7 @@
         <section id="mp-bot-panel" class="mp-bot-panel hidden">
           <label class="mp-toggle">
             <input id="mp-use-bot" type="checkbox">
-            <span><b data-mp-i18n="fillBot">Uzupełnij trzecie miejsce botem</b><small data-mp-i18n="fillBotHint">Bot działa u hosta gry i zajmuje trzecie miejsce.</small></span>
+            <span><b data-mp-i18n="fillBot">Uzupełnij trzecie miejsce botem</b><small data-mp-i18n="fillBotHint">Bot zajmuje trzecie miejsce i jest wykonywany przez przeglądarkę hosta.</small></span>
           </label>
           <label class="mp-field mp-inline-field">
             <span data-mp-i18n="difficulty">Poziom bota</span>
@@ -91,5 +91,6 @@
   <script src="mp/game.js?v=20260906-shared1"></script>
   <script src="mp/network-server.js?v=20260906-shared1"></script>
   <script src="multiplayer.js?v=20260906-shared1"></script>
+  <script src="mp/shared-finalize.js?v=20260906-shared1"></script>
 </body>
 </html>
