@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#10261b">
+  <meta name="duren-api-url" content="https://api.qqnd.fyi">
   <title>Dureń — offline i multiplayer</title>
   <link rel="stylesheet" href="multiplayer.css">
 </head>
@@ -19,14 +20,14 @@
     <section class="mp-card">
       <header class="mp-head">
         <div>
-          <small data-mp-i18n="privateTable">PRYWATNY STÓŁ P2P</small>
+          <small data-mp-i18n="privateTable">STÓŁ QQND SERVER</small>
           <h2 id="mp-title" data-mp-i18n="title">Multiplayer</h2>
         </div>
         <button id="mp-close" class="mp-icon" type="button" aria-label="Zamknij">×</button>
       </header>
 
       <div id="mp-home" class="mp-view">
-        <p class="mp-lead" data-mp-i18n="lead">Utwórz prywatny pokój albo dołącz kodem. Po zestawieniu połączenia rozgrywka idzie bezpośrednio między przeglądarkami.</p>
+        <p class="mp-lead" data-mp-i18n="lead">Utwórz pokój albo dołącz kodem. Rozgrywka korzysta ze wspólnego serwera QQND.</p>
         <label class="mp-field">
           <span data-mp-i18n="name">Nazwa gracza</span>
           <input id="mp-name" maxlength="20" autocomplete="nickname" value="Gracz">
@@ -39,7 +40,7 @@
           </div>
         </div>
         <div id="mp-home-status" class="mp-status" role="status"></div>
-        <p class="mp-note" data-mp-i18n="networkNote">Tryb online wymaga HTTPS i aktywnej usługi sygnalizacyjnej pod /api/. Gra offline działa bez niej.</p>
+        <p class="mp-note" data-mp-i18n="networkNote">Tryb online korzysta ze wspólnego serwera QQND. Stan gry może zostać wznowiony po odświeżeniu przeglądarki.</p>
       </div>
 
       <div id="mp-lobby" class="mp-view hidden">
@@ -56,7 +57,7 @@
         <section id="mp-bot-panel" class="mp-bot-panel hidden">
           <label class="mp-toggle">
             <input id="mp-use-bot" type="checkbox">
-            <span><b data-mp-i18n="fillBot">Uzupełnij trzecie miejsce botem</b><small data-mp-i18n="fillBotHint">Bot działa wyłącznie u hosta i nie ma własnego połączenia sieciowego.</small></span>
+            <span><b data-mp-i18n="fillBot">Uzupełnij trzecie miejsce botem</b><small data-mp-i18n="fillBotHint">Bot działa u hosta gry i zajmuje trzecie miejsce.</small></span>
           </label>
           <label class="mp-field mp-inline-field">
             <span data-mp-i18n="difficulty">Poziom bota</span>
@@ -81,14 +82,14 @@
   <div id="mp-disconnect" class="mp-disconnect hidden" role="alertdialog" aria-modal="true">
     <div class="mp-disconnect-card">
       <h3 data-mp-i18n="connectionLost">Połączenie zostało przerwane</h3>
-      <p id="mp-disconnect-text" data-mp-i18n="connectionLostText">Rozgrywka została zatrzymana, aby nie dopuścić do rozjazdu stanu.</p>
+      <p id="mp-disconnect-text" data-mp-i18n="connectionLostText">Czekamy na powrót gracza. Po 60 sekundach jego miejsce może przejąć bot.</p>
       <button id="mp-disconnect-exit" class="mp-primary" type="button" data-mp-i18n="backMenu">Wróć do menu</button>
     </div>
   </div>
 
-  <script src="mp/core.js"></script>
-  <script src="mp/game.js"></script>
-  <script src="mp/network.js"></script>
-  <script src="multiplayer.js"></script>
+  <script src="mp/core.js?v=20260906-shared1"></script>
+  <script src="mp/game.js?v=20260906-shared1"></script>
+  <script src="mp/network-server.js?v=20260906-shared1"></script>
+  <script src="multiplayer.js?v=20260906-shared1"></script>
 </body>
 </html>
