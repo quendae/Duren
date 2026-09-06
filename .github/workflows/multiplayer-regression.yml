@@ -25,8 +25,8 @@ jobs:
           node --check mp/game.js
           node --check mp/network-server.js
           node --check mp/shared-finalize.js
-          grep -q 'network-server.js?v=20260906-shared1' durniak.html
-          ! grep -q '<script src="mp/network.js' durniak.html
+          grep -q 'network-server.js?v=20260906-shared1' index.html
+          ! grep -q '<script src="mp/network.js' index.html
           ! grep -q 'RTCPeerConnection' mp/network-server.js
           grep -q 'wss://api.qqnd.fyi/api/v1/ws' mp/network-server.js
           grep -q "type: 'game.state.commit'" mp/network-server.js
