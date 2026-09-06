@@ -18,15 +18,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Syntax checks
+      - name: Runtime structure and syntax
         run: |
+          test -f index.html
+          test -f durniak-offline.html
+          test -f multiplayer.css
+          test -f multiplayer.js
+          test -f mp/core.js
+          test -f mp/game.js
+          test -f mp/network-server.js
+          test ! -e cloudflare-signaling
+          test ! -e mp/network.js
+          test ! -e mp/shared-finalize.js
           node --check multiplayer.js
           node --check mp/core.js
           node --check mp/game.js
           node --check mp/network-server.js
-          node --check mp/shared-finalize.js
-          grep -q 'network-server.js?v=20260906-shared1' index.html
-          ! grep -q '<script src="mp/network.js' index.html
+          grep -q 'multiplayer.css?v=20260906-clean1' index.html
+          grep -q 'network-server.js?v=20260906-clean1' index.html
+          ! grep -q 'RTCPeerConnection' mp/core.js
           ! grep -q 'RTCPeerConnection' mp/network-server.js
           grep -q 'wss://api.qqnd.fyi/api/v1/ws' mp/network-server.js
           grep -q "type: 'game.state.commit'" mp/network-server.js
