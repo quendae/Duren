@@ -36,6 +36,17 @@ jobs:
           PY
       - name: Generate single runtime
         run: node scripts/apply-single-runtime.mjs
+      - name: Finish same-page bridge
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('multiplayer.js')
+          text=p.read_text()
+          text=text.replace('mp.frameWindow.Durak', 'window.Durak')
+          text=text.replace('mp.frameWindow?.Durak', 'window.Durak')
+          p.write_text(text)
+          PY
+          ! grep -R -E 'frameWindow|contentWindow|contentDocument' multiplayer.js mp/core.js mp/game.js mp/network-server.js
       - name: Syntax checks
         run: |
           node --check game.js
