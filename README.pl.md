@@ -14,9 +14,11 @@ Przeglądarkowa wersja klasycznego Durnia na 36 kart, z trybem offline i multipl
 - podpowiedzi dla początkujących i samouczek
 - responsywny interfejs
 - języki: polski, angielski, niemiecki i rosyjski
+- jedno wspólne menu dla gry offline i online
 - pokoje online przez wspólny serwer QQND
 - multiplayer dla 2 graczy, 3 graczy oraz 2 graczy + bot
 - reconnect z 60-sekundowym czasem na powrót
+- Kontynuuj preferuje możliwą do wznowienia grę online, a następnie zapis offline
 
 ## Uruchomienie
 
@@ -26,11 +28,12 @@ W wersji hostowanej punktem wejścia jest:
 index.html
 ```
 
-Wymagany zestaw runtime:
+Produkcyjny zestaw runtime:
 
 ```text
 index.html
-durniak-offline.html
+game.css
+game.js
 multiplayer.css
 multiplayer.js
 mp/
@@ -39,7 +42,7 @@ mp/
   network-server.js
 ```
 
-`index.html` jest wejściem do wersji online. `durniak-offline.html` zawiera silnik i UI samej gry i można go nadal otworzyć bezpośrednio do gry offline.
+`index.html` jest jedynym plikiem HTML aplikacji. Gra offline i online korzystają z tego samego DOM-u oraz `window.Durak`; nie ma osobnej strony offline ani iframe.
 
 ## Architektura multiplayer
 
@@ -49,6 +52,6 @@ Duren jest obecnie host-authoritative: przeglądarka hosta wykonuje zasady i wys
 
 ## Testy
 
-GitHub Actions uruchamia regresję rozgrywki, testy responsywności oraz smoke test klienta wspólnego serwera QQND.
+GitHub Actions sprawdza strukturę single-runtime, priorytet wznawiania online/offline, regresję rozgrywki, responsywność, prywatność widoków stanu i pełny smoke test klienta wspólnego serwera QQND.
 
 Szczegóły wdrożenia są w [DEPLOY_MULTIPLAYER.md](DEPLOY_MULTIPLAYER.md).
