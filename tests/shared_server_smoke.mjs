@@ -87,7 +87,7 @@ async function makePage() {
     window.__ids = { HOST_ID, GUEST_ID };
   }, { HOST_ID, GUEST_ID });
   await page.goto(base,{waitUntil:'load'});
-  await page.waitForFunction(() => window.DurakMultiplayer?.debug?.state?.game?.state && window.DurakMultiplayer.clientBuild === '20260906-shared1');
+  await page.waitForFunction(() => window.DurakMultiplayer?.debug?.state?.game?.state && window.DurakMultiplayer.clientBuild === '20260908-single1');
   return page;
 }
 
@@ -99,6 +99,8 @@ try {
   await page.fill('#mp-name','Tester');
   await page.click('#mp-create');
   await page.waitForFunction(() => window.DurakMultiplayer.debug.state.roomCode === 'TEST-ROOM');
+  const waitingSession = await page.evaluate(() => JSON.parse(localStorage.getItem('duren.qqnd.server-session.v1')));
+  assert.equal(waitingSession.onlineEligible,false,'waiting lobby must not appear as resumable online game');
 
   await page.evaluate(({ GUEST_ID }) => {
     const room=window.__serverRoom; const now=Date.now();
@@ -128,6 +130,17 @@ try {
   await page.evaluate(({ GUEST_ID }) => window.__emitServer({type:'game.player.connection',roomId:'TEST-ROOM',sessionId:GUEST_ID,seat:1,nickname:'Alice',connected:true,reclaimedFromBot:true,botSeats:[],hostSessionId:window.__ids.HOST_ID,authoritative:false}),{GUEST_ID});
   await page.waitForFunction(() => window.Durak.game.state.players[1]?.isBot === false);
   await page.waitForFunction(() => document.getElementById('mp-presence-notice')?.style.visibility === 'hidden');
+
+  const leavesBeforeMenu = await page.evaluate(() => window.__wsFrames.filter((m)=>m.type==='room.leave').length);
+  await page.click('[data-action="open-main-menu"]');
+  await page.waitForFunction(() => !document.getElementById('main-menu').classList.contains('hidden'));
+  const leavesAfterMenu = await page.evaluate(() => window.__wsFrames.filter((m)=>m.type==='room.leave').length);
+  assert.equal(leavesAfterMenu,leavesBeforeMenu,'opening Menu must not leave an active online game');
+  await page.click('[data-action="menu-new-game"]');
+  await page.waitForFunction(() => !document.getElementById('new-game-modal').classList.contains('hidden'));
+  await page.waitForFunction(() => window.DurakMultiplayer.debug.state.inGame === false);
+  const leavesAfterOfflineSwitch = await page.evaluate(() => window.__wsFrames.filter((m)=>m.type==='room.leave').length);
+  assert.ok(leavesAfterOfflineSwitch > leavesAfterMenu,'switching from online to New Game must leave the online room first');
 
   await page.close();
 

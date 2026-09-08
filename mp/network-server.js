@@ -4,7 +4,7 @@
   const D = window.DurakMP;
   const mp = D.mp;
   const GAME_ID = 'duren';
-  const CLIENT_BUILD = '20260906-shared1';
+  const CLIENT_BUILD = '20260908-single1';
   const WS_URL = window.DURAK_WS_URL || 'wss://api.qqnd.fyi/api/v1/ws';
   const SESSION_KEY = 'duren.qqnd.server-session.v1';
   const REQUEST_TIMEOUT_MS = 12000;
@@ -90,7 +90,7 @@
     if (!mp.session?.id || !mp.resumeToken) return;
     try {
       const previous = loadStoredSession() || {};
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ sessionId: mp.session.id, resumeToken: mp.resumeToken, nickname: mp.session.nickname, roomId: mp.roomCode || previous.roomId || null, onlineEligible: mp.roomObj?.status === 'in_game' ? true : previous.onlineEligible }));
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ sessionId: mp.session.id, resumeToken: mp.resumeToken, nickname: mp.session.nickname, roomId: mp.roomCode || previous.roomId || null, onlineEligible: mp.roomObj ? mp.roomObj.status === 'in_game' : Boolean(previous.onlineEligible) }));
     } catch {}
   }
 
@@ -642,10 +642,7 @@
     if (message.type === 'session.resumed') {
       mp.session = message.session;
       const room = (message.rooms || []).find((item) => item.game === GAME_ID);
-      if (room) {
-        syncRoom(room);
-        if (room.status === 'in_game') socketSend({ type: 'game.state.get', roomId: room.id });
-      }
+      if (room) syncRoom(room);
       return;
     }
     if (['room.created', 'room.joined', 'room.updated'].includes(message.type) && message.room?.game === GAME_ID) {

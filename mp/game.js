@@ -127,6 +127,12 @@
   function captureGameClick(event){
     if(!mp.inGame)return;
     const target=event.target,actionEl=target.closest?.('[data-action]'),cardEl=target.closest?.('[data-card-id]'),pairEl=target.closest?.('[data-pair-index]');
+    const modeSwitch=actionEl?.dataset.action;
+    if(['menu-new-game','menu-tutorial'].includes(modeSwitch)){
+      event.preventDefault();event.stopImmediatePropagation();
+      Promise.resolve(D.leaveMultiplayer?.()).then(()=>document.querySelector('[data-action="'+modeSwitch+'"]')?.click());
+      return;
+    }
     if(mp.role==='host'){
       if(actionEl?.dataset.action==='open-main-menu'){event.preventDefault();event.stopImmediatePropagation();D.showGameMenu();}
       return;

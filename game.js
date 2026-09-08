@@ -18,14 +18,14 @@
   const PL = {
     common: {
       you: 'Ty', close: 'Zamknij', cancel: 'Anuluj', done: 'Gotowe', back: 'Wstecz', next: 'Dalej',
-      eyebrow: 'OFFLINE · KARTY · DURZEŃ', yourCards: 'Twoje karty', tableCards: 'Karty na stole',
+      eyebrow: 'KARTY · DUREŃ', yourCards: 'Twoje karty', tableCards: 'Karty na stole',
       handHistory: 'Historia rozdania', roundSummary: 'PODSUMOWANIE ROZDANIA',
       cards: 'kart', deck: 'Talon', discard: 'Odbite', empty: 'pusty', none: '—',
       bot: 'Bot', player: 'Gracz', trumpSuit: 'Atut: {suit}',
     },
     menu: {
-      eyebrow: 'OFFLINE · KARTY · DURZEŃ',
-      subtitle: 'Klasyczny Durak · jeden gracz i do trzech botów',
+      eyebrow: 'OFFLINE · ONLINE · KARTY · DUREŃ',
+      subtitle: 'Klasyczny Durak · offline i online',
       continue: 'Kontynuuj grę', continueOnline: 'Kontynuuj grę online', newGame: 'Nowa gra', online: 'Gra online', howToPlay: 'Jak grać', language: 'Język',
       saved: 'Zapisana partia: rozdanie {round} · {phase}', noSave: 'Brak zapisanej partii.',
     },
@@ -173,14 +173,14 @@
   const EN = {
     common: {
       you: 'You', close: 'Close', cancel: 'Cancel', done: 'Done', back: 'Back', next: 'Next',
-      eyebrow: 'OFFLINE · CARDS · THE FOOL', yourCards: 'Your cards', tableCards: 'Cards on the table',
+      eyebrow: 'CARDS · DURAK', yourCards: 'Your cards', tableCards: 'Cards on the table',
       handHistory: 'Round history', roundSummary: 'ROUND SUMMARY',
       cards: 'cards', deck: 'Talon', discard: 'Discard', empty: 'empty', none: '—',
       bot: 'Bot', player: 'Player', trumpSuit: 'Trump: {suit}',
     },
     menu: {
-      eyebrow: 'OFFLINE · CARDS · THE FOOL',
-      subtitle: 'Classic Durak · one player and up to three bots',
+      eyebrow: 'OFFLINE · ONLINE · CARDS · DURAK',
+      subtitle: 'Classic Durak · offline and online',
       continue: 'Continue game', continueOnline: 'Continue online game', newGame: 'New game', online: 'Online game', howToPlay: 'How to play', language: 'Language',
       saved: 'Saved game: round {round} · {phase}', noSave: 'No saved game.',
     },
@@ -331,14 +331,14 @@
     de: {
       common: {
         you: 'Du', close: 'Schließen', cancel: 'Abbrechen', done: 'Fertig', back: 'Zurück', next: 'Weiter',
-        eyebrow: 'OFFLINE · KARTEN · DER NARR', yourCards: 'Deine Karten', tableCards: 'Karten auf dem Tisch',
+        eyebrow: 'KARTEN · DURAK', yourCards: 'Deine Karten', tableCards: 'Karten auf dem Tisch',
         handHistory: 'Rundenhistorie', roundSummary: 'RUNDENÜBERSICHT',
         cards: 'Karten', deck: 'Talon', discard: 'Ablage', empty: 'leer', none: '—',
         bot: 'Bot', player: 'Spieler', trumpSuit: 'Trumpf: {suit}',
       },
       menu: {
-        eyebrow: 'OFFLINE · KARTEN · DER NARR',
-        subtitle: 'Klassisches Durak · ein Spieler und bis zu drei Bots',
+        eyebrow: 'OFFLINE · ONLINE · KARTEN · DURAK',
+        subtitle: 'Klassisches Durak · offline und online',
         continue: 'Spiel fortsetzen', continueOnline: 'Online-Spiel fortsetzen', newGame: 'Neues Spiel', online: 'Online spielen', howToPlay: 'Spielanleitung', language: 'Sprache',
         saved: 'Gespeichertes Spiel: Runde {round} · {phase}', noSave: 'Kein gespeichertes Spiel.',
       },
@@ -485,14 +485,14 @@
     ru: {
       common: {
         you: 'Ты', close: 'Закрыть', cancel: 'Отмена', done: 'Готово', back: 'Назад', next: 'Дальше',
-        eyebrow: 'ОФЛАЙН · КАРТЫ · ДУРАК', yourCards: 'Твои карты', tableCards: 'Карты на столе',
+        eyebrow: 'КАРТЫ · ДУРАК', yourCards: 'Твои карты', tableCards: 'Карты на столе',
         handHistory: 'История раунда', roundSummary: 'ИТОГ РАУНДА',
         cards: 'карт', deck: 'Колода', discard: 'Сброс', empty: 'пусто', none: '—',
         bot: 'Бот', player: 'Игрок', trumpSuit: 'Козырь: {suit}',
       },
       menu: {
-        eyebrow: 'ОФЛАЙН · КАРТЫ · ДУРАК',
-        subtitle: 'Классический Дурак · один игрок и до трёх ботов',
+        eyebrow: 'ОФЛАЙН · ОНЛАЙН · КАРТЫ · ДУРАК',
+        subtitle: 'Классический Дурак · офлайн и онлайн',
         continue: 'Продолжить игру', continueOnline: 'Продолжить онлайн-игру', newGame: 'Новая игра', online: 'Игра онлайн', howToPlay: 'Как играть', language: 'Язык',
         saved: 'Сохранённая игра: раунд {round} · {phase}', noSave: 'Нет сохранённых игр.',
       },
