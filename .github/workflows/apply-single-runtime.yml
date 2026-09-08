@@ -22,6 +22,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Normalize legacy line endings
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for name in [
+              'durniak-offline.html','index.html','multiplayer.js','multiplayer.css',
+              'mp/core.js','mp/game.js','mp/network-server.js',
+              'tests/multiplayer_smoke.mjs','tests/shared_server_smoke.mjs'
+          ]:
+              p=Path(name)
+              p.write_bytes(p.read_bytes().replace(b'\r\n', b'\n'))
+          PY
       - name: Generate single runtime
         run: node scripts/apply-single-runtime.mjs
       - name: Syntax checks
