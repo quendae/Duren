@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - scripts/finalize-single-runtime.mjs
       - .github/workflows/apply-single-runtime.yml
   workflow_dispatch:
 
@@ -21,79 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Apply final lifecycle and menu hardening
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          def replace_once(text, old, new, label):
-              if old not in text:
-                  raise SystemExit(f'missing replacement target: {label}')
-              return text.replace(old, new, 1)
-
-          p=Path('game.js'); text=p.read_text()
-          replacements=[
-            ("eyebrow: 'OFFLINE · KARTY · DURZEŃ', yourCards:", "eyebrow: 'KARTY · DUREŃ', yourCards:", 'PL common eyebrow'),
-            ("eyebrow: 'OFFLINE · KARTY · DURZEŃ',\n      subtitle: 'Klasyczny Durak · jeden gracz i do trzech botów',", "eyebrow: 'OFFLINE · ONLINE · KARTY · DUREŃ',\n      subtitle: 'Klasyczny Durak · offline i online',", 'PL menu copy'),
-            ("eyebrow: 'OFFLINE · CARDS · THE FOOL', yourCards:", "eyebrow: 'CARDS · DURAK', yourCards:", 'EN common eyebrow'),
-            ("eyebrow: 'OFFLINE · CARDS · THE FOOL',\n      subtitle: 'Classic Durak · one player and up to three bots',", "eyebrow: 'OFFLINE · ONLINE · CARDS · DURAK',\n      subtitle: 'Classic Durak · offline and online',", 'EN menu copy'),
-            ("eyebrow: 'OFFLINE · KARTEN · DER NARR', yourCards:", "eyebrow: 'KARTEN · DURAK', yourCards:", 'DE common eyebrow'),
-            ("eyebrow: 'OFFLINE · KARTEN · DER NARR',\n        subtitle: 'Klassisches Durak · ein Spieler und bis zu drei Bots',", "eyebrow: 'OFFLINE · ONLINE · KARTEN · DURAK',\n        subtitle: 'Klassisches Durak · offline und online',", 'DE menu copy'),
-            ("eyebrow: 'ОФЛАЙН · КАРТЫ · ДУРАК', yourCards:", "eyebrow: 'КАРТЫ · ДУРАК', yourCards:", 'RU common eyebrow'),
-            ("eyebrow: 'ОФЛАЙН · КАРТЫ · ДУРАК',\n        subtitle: 'Классический Дурак · один игрок и до трёх ботов',", "eyebrow: 'ОФЛАЙН · ОНЛАЙН · КАРТЫ · ДУРАК',\n        subtitle: 'Классический Дурак · офлайн и онлайн',", 'RU menu copy'),
-          ]
-          for old,new,label in replacements: text=replace_once(text,old,new,label)
-          p.write_text(text)
-
-          p=Path('index.html'); text=p.read_text()
-          text=replace_once(text,'<div class="eyebrow" data-i18n="menu.eyebrow">OFFLINE · KARTY · DURZEŃ</div>','<div class="eyebrow" data-i18n="menu.eyebrow">OFFLINE · ONLINE · KARTY · DUREŃ</div>','static menu eyebrow')
-          text=replace_once(text,'<p class="menu-subtitle" data-i18n="menu.subtitle">Klasyczny Durak · jeden gracz i do trzech botów</p>','<p class="menu-subtitle" data-i18n="menu.subtitle">Klasyczny Durak · offline i online</p>','static menu subtitle')
-          text=replace_once(text,'<div class="eyebrow" data-i18n="common.eyebrow">OFFLINE · KARTY · DURZEŃ</div>','<div class="eyebrow" data-i18n="common.eyebrow">KARTY · DUREŃ</div>','static game eyebrow')
-          p.write_text(text)
-
-          p=Path('mp/network-server.js'); text=p.read_text()
-          text=replace_once(text,"const CLIENT_BUILD = '20260906-shared1';","const CLIENT_BUILD = '20260908-single1';",'client build')
-          text=replace_once(text,"onlineEligible: mp.roomObj?.status === 'in_game' ? true : previous.onlineEligible","onlineEligible: mp.roomObj ? mp.roomObj.status === 'in_game' : Boolean(previous.onlineEligible)",'resume eligibility')
-          text=replace_once(text,"      if (room) {\n        syncRoom(room);\n        if (room.status === 'in_game') socketSend({ type: 'game.state.get', roomId: room.id });\n      }","      if (room) syncRoom(room);",'duplicate state request')
-          p.write_text(text)
-
-          p=Path('mp/game.js'); text=p.read_text()
-          old="""    const target=event.target,actionEl=target.closest?.('[data-action]'),cardEl=target.closest?.('[data-card-id]'),pairEl=target.closest?.('[data-pair-index]');
-    if(mp.role==='host'){"""
-          new="""    const target=event.target,actionEl=target.closest?.('[data-action]'),cardEl=target.closest?.('[data-card-id]'),pairEl=target.closest?.('[data-pair-index]');
-    const modeSwitch=actionEl?.dataset.action;
-    if(['menu-new-game','menu-tutorial'].includes(modeSwitch)){
-      event.preventDefault();event.stopImmediatePropagation();
-      Promise.resolve(D.leaveMultiplayer?.()).then(()=>document.querySelector(`[data-action=\"${modeSwitch}\"]`)?.click());
-      return;
-    }
-    if(mp.role==='host'){"""
-          text=replace_once(text,old,new,'online-to-offline mode switch')
-          p.write_text(text)
-
-          p=Path('tests/shared_server_smoke.mjs'); text=p.read_text()
-          text=replace_once(text,"window.DurakMultiplayer.clientBuild === '20260906-shared1'","window.DurakMultiplayer.clientBuild === '20260908-single1'",'client build assertion')
-          text=replace_once(text,"  await page.waitForFunction(() => window.DurakMultiplayer.debug.state.roomCode === 'TEST-ROOM');\n","  await page.waitForFunction(() => window.DurakMultiplayer.debug.state.roomCode === 'TEST-ROOM');\n  const waitingSession = await page.evaluate(() => JSON.parse(localStorage.getItem('duren.qqnd.server-session.v1')));\n  assert.equal(waitingSession.onlineEligible,false,'waiting lobby must not appear as resumable online game');\n",'waiting-room resume assertion')
-          marker="""  await page.waitForFunction(() => document.getElementById('mp-presence-notice')?.style.visibility === 'hidden');
-
-  await page.close();"""
-          replacement="""  await page.waitForFunction(() => document.getElementById('mp-presence-notice')?.style.visibility === 'hidden');
-
-  const leavesBeforeMenu = await page.evaluate(() => window.__wsFrames.filter((m)=>m.type==='room.leave').length);
-  await page.click('[data-action=\"open-main-menu\"]');
-  await page.waitForFunction(() => !document.getElementById('main-menu').classList.contains('hidden'));
-  const leavesAfterMenu = await page.evaluate(() => window.__wsFrames.filter((m)=>m.type==='room.leave').length);
-  assert.equal(leavesAfterMenu,leavesBeforeMenu,'opening Menu must not leave an active online game');
-  await page.click('[data-action=\"menu-new-game\"]');
-  await page.waitForFunction(() => !document.getElementById('new-game-modal').classList.contains('hidden'));
-  await page.waitForFunction(() => window.DurakMultiplayer.debug.state.inGame === false);
-  const leavesAfterOfflineSwitch = await page.evaluate(() => window.__wsFrames.filter((m)=>m.type==='room.leave').length);
-  assert.ok(leavesAfterOfflineSwitch > leavesAfterMenu,'switching from online to New Game must leave the online room first');
-
-  await page.close();"""
-          text=replace_once(text,marker,replacement,'menu lifecycle regression')
-          p.write_text(text)
-          PY
+      - name: Apply final hardening
+        run: node scripts/finalize-single-runtime.mjs
       - name: Syntax and structural checks
         run: |
           node --check game.js
