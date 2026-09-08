@@ -14,9 +14,11 @@ Browser-Version des klassischen Durak mit 36 Karten, Offline-Spiel und Online-Me
 - Anfängerhinweise und Tutorial
 - responsive Oberfläche
 - Polnisch, Englisch, Deutsch und Russisch
+- ein gemeinsames Menü für Offline- und Online-Spiel
 - Online-Räume über den gemeinsamen QQND-Spieleserver
 - Online-Partien mit 2 Spielern, 3 Spielern oder 2 Spielern + Bot
 - Reconnect mit 60 Sekunden Rückkehrzeit
+- Fortsetzen bevorzugt eine wiederaufnehmbare Online-Partie und fällt danach auf den Offline-Spielstand zurück
 
 ## Start
 
@@ -26,11 +28,12 @@ Für die gehostete Version ist der Einstiegspunkt:
 index.html
 ```
 
-Benötigte Runtime-Dateien:
+Die Produktions-Runtime besteht aus:
 
 ```text
 index.html
-durniak-offline.html
+game.css
+game.js
 multiplayer.css
 multiplayer.js
 mp/
@@ -39,7 +42,7 @@ mp/
   network-server.js
 ```
 
-`index.html` ist der öffentliche Einstieg. `durniak-offline.html` enthält Spiel-Engine und UI und kann weiterhin direkt für Offline-Spiel geöffnet werden.
+`index.html` ist der einzige HTML-Einstiegspunkt. Offline- und Online-Spiel verwenden denselben DOM und dieselbe `window.Durak`-Runtime; es gibt keine zweite Offline-Seite und kein iframe.
 
 ## Multiplayer-Architektur
 
@@ -49,6 +52,6 @@ Duren ist derzeit host-authoritative: Der Host-Browser führt die Regeln aus und
 
 ## Tests
 
-GitHub Actions prüft Spielregression, responsive Layouts und einen Browser-Smoke-Test des gemeinsamen QQND-Servers.
+GitHub Actions prüft die Single-Runtime-Struktur, die Online-/Offline-Fortsetzungspriorität, Spielregressionen, responsive Layouts, private Zustandsansichten und den Browser-Smoke-Test des gemeinsamen QQND-Servers.
 
 Details zur Bereitstellung stehen in [DEPLOY_MULTIPLAYER.md](DEPLOY_MULTIPLAYER.md).
