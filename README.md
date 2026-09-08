@@ -14,9 +14,11 @@ Browser implementation of the classic 36-card Durak game with offline play and o
 - beginner hints and tutorial
 - responsive browser UI
 - Polish, English, German and Russian interface
+- one shared menu for offline and online play
 - online rooms through the shared QQND game server
 - 2-player, 3-player and 2-player + bot online games
 - reconnect support with a 60-second grace period
+- Continue prefers a resumable online game, then falls back to the offline autosave
 
 ## Run
 
@@ -26,11 +28,12 @@ For the hosted version, serve the repository as static files and open:
 index.html
 ```
 
-The required runtime files are:
+The production runtime is:
 
 ```text
 index.html
-durniak-offline.html
+game.css
+game.js
 multiplayer.css
 multiplayer.js
 mp/
@@ -39,7 +42,7 @@ mp/
   network-server.js
 ```
 
-`index.html` is the public entry point. `durniak-offline.html` contains the original game engine/UI and can still be opened directly for offline play.
+`index.html` is the only HTML entry point. Offline and online play share the same DOM and `window.Durak` runtime; there is no secondary offline page or iframe.
 
 ## Multiplayer architecture
 
@@ -49,6 +52,6 @@ Duren is currently host-authoritative: the host browser runs the rules and publi
 
 ## Testing
 
-GitHub Actions runs gameplay regression tests, responsive checks and a shared-server browser smoke test.
+GitHub Actions validates the single-runtime structure, offline/online resume priority, gameplay regressions, responsive layouts, private state projections and the shared QQND browser flow.
 
 Deployment details are in [DEPLOY_MULTIPLAYER.md](DEPLOY_MULTIPLAYER.md).
