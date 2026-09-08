@@ -66,11 +66,17 @@ jobs:
         run: node tests/multiplayer_smoke.mjs
       - name: Shared QQND smoke
         run: node tests/shared_server_smoke.mjs
-      - name: Commit generated runtime
+      - name: Commit verified runtime only
         run: |
+          rm -rf node_modules
           git config user.name "qqnd-ci"
           git config user.email "actions@users.noreply.github.com"
-          git add -A
+          git reset
+          git add index.html game.css game.js multiplayer.css multiplayer.js
+          git add mp/core.js mp/game.js mp/network-server.js
+          git add tests/single_runtime_smoke.mjs tests/resume_smoke.mjs tests/multiplayer_smoke.mjs tests/shared_server_smoke.mjs
+          git add DEPLOY_MULTIPLAYER.md
+          git add -u durniak-offline.html
           git diff --cached --quiet && exit 0
           git commit -m "refactor: unify Duren offline and multiplayer runtime [skip ci]"
           git push origin HEAD:main
