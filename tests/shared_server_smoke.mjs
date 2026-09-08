@@ -93,7 +93,7 @@ async function makePage() {
 
 try {
   const page = await makePage();
-  await page.click('#mp-launch');
+  await page.click('[data-action="menu-online"]');
   await page.waitForSelector('#mp-server-browser');
   await page.waitForFunction(() => document.querySelectorAll('[data-room-id]').length === 1);
   await page.fill('#mp-name','Tester');
@@ -122,17 +122,17 @@ try {
   const lostNotice = await page.locator('#mp-presence-notice').textContent();
 
   await page.evaluate(({ GUEST_ID }) => window.__emitServer({type:'game.player.bot_takeover',roomId:'TEST-ROOM',sessionId:GUEST_ID,seat:1,nickname:'Alice',botSeats:[1],hostSessionId:window.__ids.HOST_ID,authoritative:false}),{GUEST_ID});
-  await page.waitForFunction(() => document.querySelector('#durak-game').contentWindow.Durak.game.state.players[1]?.isBot === true);
+  await page.waitForFunction(() => window.Durak.game.state.players[1]?.isBot === true);
   const botNotice = await page.locator('#mp-presence-notice').textContent();
 
   await page.evaluate(({ GUEST_ID }) => window.__emitServer({type:'game.player.connection',roomId:'TEST-ROOM',sessionId:GUEST_ID,seat:1,nickname:'Alice',connected:true,reclaimedFromBot:true,botSeats:[],hostSessionId:window.__ids.HOST_ID,authoritative:false}),{GUEST_ID});
-  await page.waitForFunction(() => document.querySelector('#durak-game').contentWindow.Durak.game.state.players[1]?.isBot === false);
+  await page.waitForFunction(() => window.Durak.game.state.players[1]?.isBot === false);
   await page.waitForFunction(() => document.getElementById('mp-presence-notice')?.style.visibility === 'hidden');
 
   await page.close();
 
   const hybrid = await makePage();
-  await hybrid.click('#mp-launch'); await hybrid.fill('#mp-name','Tester'); await hybrid.click('#mp-create');
+  await hybrid.click('[data-action="menu-online"]'); await hybrid.fill('#mp-name','Tester'); await hybrid.click('#mp-create');
   await hybrid.waitForFunction(() => window.DurakMultiplayer.debug.state.roomCode === 'TEST-ROOM');
   await hybrid.evaluate(({ GUEST_ID }) => { const room=window.__serverRoom,now=Date.now();room.players.push({id:GUEST_ID,nickname:'Alice',connected:true,createdAt:now,lastSeenAt:now,joinedAt:now});window.__emitServer({type:'room.updated',room:structuredClone(room)}); },{GUEST_ID});
   await hybrid.waitForFunction(() => document.getElementById('mp-bot-panel') && !document.getElementById('mp-bot-panel').classList.contains('hidden'));
@@ -141,8 +141,8 @@ try {
   await hybrid.waitForFunction(() => window.DurakMultiplayer.debug.state.inGame === true);
   const hybridStart = await hybrid.evaluate(() => window.__wsFrames.find((m)=>m.type==='game.start'));
   assert.equal(hybridStart.botCount,1,'hybrid start did not request server bot seat');
-  assert.equal(await hybrid.evaluate(() => document.querySelector('#durak-game').contentWindow.Durak.game.state.players.length),3);
-  assert.equal(await hybrid.evaluate(() => document.querySelector('#durak-game').contentWindow.Durak.game.state.players[2]?.isBot),true);
+  assert.equal(await hybrid.evaluate(() => window.Durak.game.state.players.length),3);
+  assert.equal(await hybrid.evaluate(() => window.Durak.game.state.players[2]?.isBot),true);
   await hybrid.close();
 
   console.log('Shared QQND server browser smoke: PASS');

@@ -11,10 +11,9 @@
     });
   }
   D.installGameHooks=()=>{
-    const w=D.frame.contentWindow;
-    if(!w?.Durak?.game)return;
-    mp.frameWindow=w; mp.game=w.Durak.game;
-    const G=w.Durak;
+    const G=window.Durak;
+    if(!G?.game||!G?.ui)return;
+    mp.game=G.game;
     if(G.ui.__durakMpHooked){mp.hooksInstalled=true;return;}
     Object.defineProperty(G.ui,'__durakMpHooked',{value:true});
     mp.originalRender=G.ui.render.bind(G.ui);
@@ -24,7 +23,7 @@
     G.bot.chooseThrowIn=function(ctx){const q=consumeRemoteMove(ctx,['play-card','pass']);return q?(q.action==='pass'?null:(ctx.hand.find(c=>c.id===q.payload.cardId)||null)):mp.originalBot.chooseThrowIn(ctx);};
     G.bot.chooseDefense=function(ctx){const q=consumeRemoteMove(ctx,['take','beat','transfer']);if(!q)return mp.originalBot.chooseDefense(ctx);if(q.action==='take')return{type:'take'};if(q.action==='transfer')return{type:'transfer',card:ctx.hand.find(c=>c.id===q.payload.cardId)};return{type:'beat',pair:G.game.state.table[q.payload.pairIndex],card:ctx.hand.find(c=>c.id===q.payload.cardId)};};
     try{
-      const proto=w.Storage?.prototype;
+      const proto=window.Storage?.prototype;
       if(proto&&!proto.__durakMpPatched){const original=proto.setItem;Object.defineProperty(proto,'__durakMpPatched',{value:true});proto.setItem=function(k,v){if(k==='durniowie-session-v1'&&mp.inGame)return;return original.call(this,k,v);};}
     }catch{}
     const doc=D.gameDoc(); doc?.addEventListener('click',captureGameClick,true); doc?.addEventListener('change',captureGameChange,true);
@@ -43,7 +42,7 @@
   function nextActive(s,from){for(let step=1;step<=s.players.length;step++){const i=(from+step)%s.players.length;if(!s.out[i])return i;}return from;}
 
   D.validateAction=(seat,action,payload={})=>{
-    const G=mp.frameWindow?.Durak,s=G?.game?.state;
+    const G=window.Durak,s=G?.game?.state;
     if(!s||!mp.inGame||mp.paused)return{ok:false,code:'NOT_IN_GAME'};
     if(!Number.isInteger(seat)||seat<1||seat>=s.players.length)return{ok:false,code:'BAD_SEAT'};
     if(D.currentActor(s)!==seat)return{ok:false,code:'NOT_YOUR_TURN'};
@@ -79,9 +78,9 @@
     const state=mp.game.state;
     mp.remoteQueue.set(peer.seat,{action,payload,control:'human'});
     state.players[peer.seat].isBot=true;
-    const speedKey=state.settings.speed,old=mp.frameWindow.Durak.SPEEDS[speedKey];
-    mp.frameWindow.Durak.SPEEDS[speedKey]=0.01;
-    try{mp.game.refresh();}finally{mp.frameWindow.Durak.SPEEDS[speedKey]=old;}
+    const speedKey=state.settings.speed,old=window.Durak.SPEEDS[speedKey];
+    window.Durak.SPEEDS[speedKey]=0.01;
+    try{mp.game.refresh();}finally{window.Durak.SPEEDS[speedKey]=old;}
     return true;
   };
 
@@ -103,7 +102,7 @@
     setLocalStatus(view); return view;
   };
   function setLocalStatus(view){
-    const G=mp.frameWindow?.Durak;if(!G)return;
+    const G=window.Durak;if(!G)return;
     if(view.phase==='attack'&&view.attacker===0)view.status={key:'status.yourAttack',vars:null};
     else if(view.phase==='defense'&&view.defender===0){const u=G.rules.unbeatenPairs(view.table);view.status=u.length>1?{key:'status.yourDefenseMulti',vars:null}:u.length===1?{key:'status.yourDefense',vars:{card:G.rules.cardLabel(u[0].attack)}}:view.status;}
     else if(view.phase==='throwin'&&view.thrower===0)view.status={key:view.taking?'status.yourThrowInTake':'status.yourThrowIn',vars:view.taking?{name:view.players[view.defender]?.name||D.tr('human')}:null};
@@ -118,9 +117,9 @@
   };
 
   D.renderGuestView=()=>{
-    if(mp.role!=='guest'||!mp.guestView||!mp.frameWindow?.Durak?.ui)return;
+    if(mp.role!=='guest'||!mp.guestView||!window.Durak?.ui)return;
     const view=D.clone(mp.guestView);view.defenseTarget=mp.guestUi.defenseTarget;view.transferMode=mp.guestUi.transferMode;
-    mp.frameWindow.Durak.ui.render(view);D.hideGameMenu();
+    window.Durak.ui.render(view);D.hideGameMenu();
   };
   D.flashGameStatus=(text)=>{const n=D.gameDoc()?.getElementById('status-text');if(!n)return;const old=n.textContent;n.textContent=text;setTimeout(()=>{if(n.textContent===text)n.textContent=old;},1800);};
   D.sendGuestAction=(action,payload={})=>D.safeSend(mp.peer?.channel,{type:'action',action,payload});
@@ -129,7 +128,7 @@
     if(!mp.inGame)return;
     const target=event.target,actionEl=target.closest?.('[data-action]'),cardEl=target.closest?.('[data-card-id]'),pairEl=target.closest?.('[data-pair-index]');
     if(mp.role==='host'){
-      if(actionEl?.dataset.action==='open-main-menu'){event.preventDefault();event.stopImmediatePropagation();D.leaveMultiplayer();}
+      if(actionEl?.dataset.action==='open-main-menu'){event.preventDefault();event.stopImmediatePropagation();D.showGameMenu();}
       return;
     }
     if(mp.role!=='guest')return;
@@ -137,7 +136,7 @@
       const action=actionEl.dataset.action;
       if(['human-take','human-pass','start-transfer','cancel-transfer','open-main-menu','open-settings','close-settings','next-round'].includes(action)){
         event.preventDefault();event.stopImmediatePropagation();
-        if(action==='human-take')D.sendGuestAction('take');else if(action==='human-pass')D.sendGuestAction('pass');else if(action==='start-transfer'){mp.guestUi.transferMode=true;D.renderGuestView();}else if(action==='cancel-transfer'){mp.guestUi.transferMode=false;D.renderGuestView();}else if(action==='open-main-menu')D.leaveMultiplayer();else if(action==='open-settings')D.gameDoc()?.getElementById('settings-modal')?.classList.remove('hidden');else if(action==='close-settings')D.gameDoc()?.getElementById('settings-modal')?.classList.add('hidden');
+        if(action==='human-take')D.sendGuestAction('take');else if(action==='human-pass')D.sendGuestAction('pass');else if(action==='start-transfer'){mp.guestUi.transferMode=true;D.renderGuestView();}else if(action==='cancel-transfer'){mp.guestUi.transferMode=false;D.renderGuestView();}else if(action==='open-main-menu')D.showGameMenu();else if(action==='open-settings')D.gameDoc()?.getElementById('settings-modal')?.classList.remove('hidden');else if(action==='close-settings')D.gameDoc()?.getElementById('settings-modal')?.classList.add('hidden');
         return;
       }
     }
@@ -160,9 +159,9 @@
     for(const peer of humans)state.players[peer.seat]={name:peer.nick,isBot:false,difficulty:'normal'};
     if(useBot)state.players[2]={name:'Bot',isBot:true,difficulty:mp.botDifficulty};
     state.botCount=state.players.filter(p=>p.isBot).length;mp.inGame=true;
-    try{mp.frameWindow.localStorage.removeItem('durniowie-session-v1');}catch{}
+    try{localStorage.removeItem('durniowie-session-v1');}catch{}
     for(const peer of humans)D.safeSend(peer.channel,{type:'start',seat:peer.seat,players:state.players.map(p=>({name:p.name,isBot:p.isBot}))});
-    D.$('mp-overlay').classList.add('hidden');D.$('mp-launch').classList.add('hidden');mp.game.refresh();
+    D.$('mp-overlay').classList.add('hidden');mp.game.refresh();
     if(mp.socket?.readyState===WebSocket.OPEN){mp.closeExpected=true;mp.socket.send(JSON.stringify({type:'close-room'}));}
     return true;
   };

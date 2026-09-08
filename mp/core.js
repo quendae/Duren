@@ -2,7 +2,6 @@
   'use strict';
 
   const D = window.DurakMP = {};
-  D.frame = document.getElementById('durak-game');
   D.$ = (id) => document.getElementById(id);
   D.MAX_MESSAGE = 64 * 1024;
   D.ROOM_RE = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
@@ -19,16 +18,12 @@
     peers:new Map(), peer:null, inGame:false, paused:false, botSeat:null, botDifficulty:'normal',
     revision:0, lastRevision:0, guestView:null, guestUi:{defenseTarget:0,transferMode:false},
     remoteQueue:new Map(), hooksInstalled:false, originalBot:null, originalRender:null,
-    frameWindow:null, game:null, closeExpected:false, fakeTestMode:false,
+    game:null, closeExpected:false, fakeTestMode:false,
   };
 
   D.language = () => {
-    try {
-      const value = D.mp.frameWindow?.Durak?.game?.state?.settings?.language || D.mp.frameWindow?.Durak?.i18n?.language;
-      return D.TEXT[value] ? value : 'pl';
-    } catch {
-      return 'pl';
-    }
+    const value = window.Durak?.game?.state?.settings?.language || window.Durak?.i18n?.language;
+    return D.TEXT[value] ? value : 'pl';
   };
   D.tr = (key, vars) => {
     let value = (D.TEXT[D.language()] || D.TEXT.pl)[key] || D.TEXT.pl[key] || key;
@@ -72,11 +67,9 @@
       return null;
     }
   };
-  D.gameDoc = () => {
-    try { return D.frame.contentDocument; } catch { return null; }
-  };
-  D.hideGameMenu = () => D.gameDoc()?.getElementById('main-menu')?.classList.add('hidden');
-  D.showGameMenu = () => { try { D.mp.game?.showMainMenu?.(); } catch {} };
+  D.gameDoc = () => document;
+  D.hideGameMenu = () => document.getElementById('main-menu')?.classList.add('hidden');
+  D.showGameMenu = () => window.Durak?.game?.showMainMenu?.();
   D.escapeHtml = (value) => String(value ?? '').replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
   D.peerForSeat = (seat) => {
     for (const peer of D.mp.peers.values()) if (peer.seat === seat && peer.connected) return peer;

@@ -89,7 +89,8 @@
   function storeSession() {
     if (!mp.session?.id || !mp.resumeToken) return;
     try {
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ sessionId: mp.session.id, resumeToken: mp.resumeToken, nickname: mp.session.nickname }));
+      const previous = loadStoredSession() || {};
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ sessionId: mp.session.id, resumeToken: mp.resumeToken, nickname: mp.session.nickname, roomId: mp.roomCode || previous.roomId || null, onlineEligible: mp.roomObj?.status === 'in_game' ? true : previous.onlineEligible }));
     } catch {}
   }
 
@@ -175,7 +176,6 @@
       const room = (message.rooms || []).find((item) => item.game === GAME_ID);
       if (room) {
         syncRoom(room);
-        if (room.status === 'in_game') socketSend({ type: 'game.state.get', roomId: room.id });
       }
       if (!silent && D.$('mp-name') && !D.$('mp-name').value) D.$('mp-name').value = stored.nickname;
       return mp.session;
@@ -255,6 +255,7 @@
       if (D.$('mp-use-bot')) D.$('mp-use-bot').checked = false;
     }
     rebuildPeers();
+    storeSession();
     if (!mp.inGame) {
       D.renderLobby();
       if (mp.role === 'host') D.broadcastLobby();
@@ -453,9 +454,9 @@
     if (Array.isArray(state.bubbles)) state.bubbles.length = total;
     state.botCount = state.players.filter((player) => player.isBot).length;
     mp.inGame = true;
-    try { mp.frameWindow.localStorage.removeItem('durniowie-session-v1'); } catch {}
+    try { localStorage.removeItem('durniowie-session-v1'); } catch {}
     D.$('mp-overlay')?.classList.add('hidden');
-    D.$('mp-launch')?.classList.add('hidden');
+    
     D.hideGameMenu();
     mp.game.refresh();
     setTimeout(() => D.broadcastState(), 0);
@@ -466,7 +467,7 @@
     mp.paused = false;
     mp.lastRevision = 0;
     D.$('mp-overlay')?.classList.add('hidden');
-    D.$('mp-launch')?.classList.add('hidden');
+    
     D.hideGameMenu();
     setTimeout(() => {
       try { socketSend({ type: 'game.state.get', roomId: mp.roomCode }); } catch {}
@@ -537,7 +538,7 @@
     mp.inGame = true;
     mp.paused = false;
     D.$('mp-overlay')?.classList.add('hidden');
-    D.$('mp-launch')?.classList.add('hidden');
+    
     D.hideGameMenu();
     mp.game.refresh();
   }
@@ -727,6 +728,32 @@
     }
   }
 
+
+  D.getStoredServerSession = loadStoredSession;
+  D.clearStoredServerSession = clearStoredSession;
+  D.clearOnlineResumeCandidate = () => {
+    const stored = loadStoredSession();
+    if (!stored) return;
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify({ ...stored, roomId: null, onlineEligible: false })); } catch {}
+  };
+  D.resumeOnlineGame = async () => {
+    await ensureSocket();
+    const session = await resumeStoredSession(false);
+    const room = mp.roomObj;
+    if (!session || !room || room.game !== GAME_ID || room.status !== 'in_game') {
+      D.clearOnlineResumeCandidate();
+      return false;
+    }
+    mp.active = true;
+    storeSession();
+    const stateMessage = await request(
+      { type:'game.state.get', roomId:room.id },
+      ['game.state','game.state.empty'],
+      (message) => message.roomId === room.id,
+    );
+    return stateMessage.type === 'game.state';
+  };
+
   D.connectSharedServer = async () => {
     prepareSharedUI();
     await ensureSocket();
@@ -738,7 +765,6 @@
   D.refreshRooms = refreshRooms;
   D.clientBuild = CLIENT_BUILD;
 
-  D.$('mp-launch')?.addEventListener('click', () => setTimeout(() => D.connectSharedServer().catch(() => D.setStatus('mp-home-status', D.tr('signalingError'), true)), 0));
   window.addEventListener('online', () => { if (!mp.socket || mp.socket.readyState !== WebSocket.OPEN) scheduleReconnect(); });
   window.addEventListener('pagehide', () => {
     if (!mp.inGame || !mp.roomCode || mp.socket?.readyState !== WebSocket.OPEN) return;
@@ -748,5 +774,4 @@
   prepareSharedUI();
   const stored = loadStoredSession();
   if (stored?.nickname && D.$('mp-name')) D.$('mp-name').value = stored.nickname;
-  ensureSocket().then(() => resumeStoredSession(true)).then(() => refreshRooms()).catch(() => {});
 })();

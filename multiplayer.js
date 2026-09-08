@@ -45,8 +45,12 @@
 
   D.leaveMultiplayer = async () => {
     try { await D.sharedLeaveRoom?.(false); } catch {}
+    D.clearOnlineResumeCandidate?.();
     D.resetNetworkOnly();
-    location.reload();
+    D.$('mp-overlay')?.classList.add('hidden');
+    D.$('mp-disconnect')?.classList.add('hidden');
+    window.Durak?.game?.showMainMenu?.();
+    window.Durak?.game?.refreshMainMenu?.();
   };
 
   D.openOverlay = () => {
@@ -68,7 +72,6 @@
     if (!mp.inGame) D.$('mp-overlay').classList.add('hidden');
   };
 
-  D.$('mp-launch').addEventListener('click', D.openOverlay);
   D.$('mp-close').addEventListener('click', D.closeOverlay);
   D.$('mp-create').addEventListener('click', D.createRoom);
   D.$('mp-join').addEventListener('click', () => D.joinRoom());
@@ -99,6 +102,44 @@
   D.$('mp-leave').addEventListener('click', D.leaveMultiplayer);
   D.$('mp-disconnect-exit').addEventListener('click', D.leaveMultiplayer);
 
+
+  D.getResumeCandidate = () => {
+    const stored = D.getStoredServerSession?.();
+    if (stored?.sessionId && stored?.resumeToken && stored.onlineEligible !== false) {
+      return { type:'online', roomId:stored.roomId || '' };
+    }
+    const saved = window.Durak?.game?.readSavedSession?.();
+    return saved ? { type:'offline', summary:saved } : null;
+  };
+
+  D.continuePreferred = async () => {
+    const candidate = D.getResumeCandidate();
+    if (candidate?.type === 'online') {
+      const info = D.$('menu-session-info');
+      if (info) info.textContent = D.language() === 'pl' ? 'Wznawianie gry online…' : 'Resuming online game…';
+      try {
+        const resumed = await D.resumeOnlineGame?.();
+        if (resumed) {
+          D.$('mp-overlay')?.classList.add('hidden');
+          window.Durak?.game?.hideMainMenu?.();
+          return true;
+        }
+      } catch (error) {
+        console.warn('[Durak MP] resume failed', error);
+        if (/invalid_session_credentials|session_expired|room_not_found|not_in_game/.test(String(error?.message || error))) D.clearOnlineResumeCandidate?.();
+      }
+      D.clearOnlineResumeCandidate?.();
+      window.Durak?.game?.refreshMainMenu?.();
+      return false;
+    }
+    if (candidate?.type === 'offline') {
+      window.Durak?.game?.continueSaved?.();
+      return true;
+    }
+    window.Durak?.game?.refreshMainMenu?.();
+    return false;
+  };
+
   function requestCurrentState() {
     D.installGameHooks?.();
     if (mp.role === 'guest' && mp.guestView) D.renderGuestView?.();
@@ -108,14 +149,8 @@
     } catch {}
   }
 
-  D.frame.addEventListener('load', () => {
-    mp.hooksInstalled = false;
-    setTimeout(() => {
-      D.installGameHooks();
-      requestCurrentState();
-    }, 0);
-  });
-  if (D.frame.contentWindow?.Durak?.game) D.installGameHooks();
+  D.installGameHooks();
+  window.Durak?.game?.refreshMainMenu?.();
   setTimeout(requestCurrentState, 0);
 
   const invariants = () => {
@@ -163,7 +198,7 @@
     if (state.phase === 'defense') {
       const pairIndex = state.table.findIndex((pair) => !pair.defense);
       const pair = state.table[pairIndex];
-      const beat = pair ? mp.frameWindow.Durak.rules.beatOptions(state.hands[actor], pair.attack, state.trump)[0] : null;
+      const beat = pair ? window.Durak.rules.beatOptions(state.hands[actor], pair.attack, state.trump)[0] : null;
       return beat ? D.queueRemoteAction(peer, 'beat', {cardId:beat.id,pairIndex}) : D.queueRemoteAction(peer, 'take', {});
     }
     return false;

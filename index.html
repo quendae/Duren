@@ -5,19 +5,248 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#10261b">
   <meta name="duren-api-url" content="https://api.qqnd.fyi">
-  <meta name="duren-client-build" content="20260906-clean1">
+  <meta name="duren-client-build" content="20260908-single1">
   <title>Dureń — offline i multiplayer</title>
-  <link rel="stylesheet" href="./multiplayer.css?v=20260906-clean1">
+  <link rel="stylesheet" href="./game.css?v=20260908-single1">
+  <link rel="stylesheet" href="./multiplayer.css?v=20260908-single1">
 </head>
 <body>
-  <iframe id="durak-game" class="game-frame" src="./durniak-offline.html?v=20260906-clean1" title="Dureń"></iframe>
+<div id="main-menu" class="main-menu">
+    <section class="menu-card" aria-labelledby="menu-title">
+      <div class="menu-mark">♠</div>
+      <div class="eyebrow" data-i18n="menu.eyebrow">OFFLINE · KARTY · DURZEŃ</div>
+      <h2 id="menu-title">DUREŃ</h2>
+      <p class="menu-subtitle" data-i18n="menu.subtitle">Klasyczny Durak · jeden gracz i do trzech botów</p>
+      <div class="menu-actions">
+        <button id="menu-continue" class="menu-button primary hidden" data-action="menu-continue">
+          <span class="menu-icon">▶</span><span class="menu-copy"><b data-menu-continue-label data-i18n="menu.continue">Kontynuuj grę</b><small id="menu-continue-detail"></small></span><span class="menu-arrow">›</span>
+        </button>
+        <button class="menu-button" data-action="menu-new-game">
+          <span class="menu-icon">＋</span><span data-i18n="menu.newGame">Nowa gra</span><span class="menu-arrow">›</span>
+        </button>
+        <button class="menu-button" data-action="menu-online">
+          <span class="menu-icon">◉</span><span data-i18n="menu.online">Gra online</span><span class="menu-arrow">›</span>
+        </button>
+        <button class="menu-button" data-action="menu-tutorial">
+          <span class="menu-icon">?</span><span data-i18n="menu.howToPlay">Jak grać</span><span class="menu-arrow">›</span>
+        </button>
+      </div>
+      <label class="menu-language">
+        <span data-i18n="menu.language">Język</span>
+        <select id="menu-language-select" data-language-select>
+          <option value="pl">Polski</option>
+          <option value="en">English</option>
+          <option value="de">Deutsch</option>
+          <option value="ru">Русский</option>
+        </select>
+      </label>
+      <small id="menu-session-info" class="menu-session-info"></small>
+    </section>
+  </div>
 
-  <button id="mp-launch" class="mp-launch" type="button" aria-haspopup="dialog">
-    <span class="mp-launch-dot" aria-hidden="true"></span>
-    <span data-mp-i18n="online">Gra online</span>
-  </button>
+  <div id="new-game-modal" class="settings-modal hidden">
+    <section class="settings-card new-game-card" aria-labelledby="new-game-title">
+      <div class="settings-head">
+        <div><div class="eyebrow" data-i18n="newGame.eyebrow">NOWA SESJA</div><h2 id="new-game-title" data-i18n="newGame.title">Ustaw nową grę</h2></div>
+        <button class="icon-button" data-action="close-new-game" data-i18n-aria="common.close" aria-label="Zamknij">×</button>
+      </div>
+      <p class="new-game-lead" data-i18n="newGame.lead">Wybierz liczbę botów, ustaw każdemu z nich osobny poziom trudności i zdecyduj o zasadach dodatkowych.</p>
 
-  <div id="mp-overlay" class="mp-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mp-title">
+      <section class="new-game-section">
+        <h3 data-i18n="newGame.table">Stół</h3>
+        <label class="select-row"><span><b data-i18n="newGame.botCount">Liczba botów</b><small data-i18n="newGame.botCountDesc">Od jednego do trzech przeciwników komputerowych.</small></span>
+          <select data-new-setting="botCount">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="new-game-section">
+        <h3 data-i18n="newGame.bots">Boty i poziomy trudności</h3>
+        <div id="bot-rows" class="bot-rows"></div>
+      </section>
+
+      <section class="new-game-section">
+        <h3 data-i18n="newGame.rules">Zasady dodatkowe</h3>
+        <div class="custom-rules">
+          <label class="toggle-row"><input type="checkbox" data-new-rule="throwInAll"><span><b data-i18n="settings.throwInAll">Dorzucają wszyscy</b><small data-i18n="settings.throwInAllDesc">Gdy wyłączone, dorzuca tylko atakujący.</small></span></label>
+          <label class="toggle-row"><input type="checkbox" data-new-rule="transfer"><span><b data-i18n="settings.transfer">Przerzucanie</b><small data-i18n="settings.transferDesc">Obrońca może przerzucić atak kartą tej samej rangi.</small></span></label>
+          <label class="toggle-row"><input type="checkbox" data-new-rule="limitSix"><span><b data-i18n="settings.limitSix">Limit 6 kart</b><small data-i18n="settings.limitSixDesc">Bez limitu atak trwa do wyczerpania ręki obrońcy.</small></span></label>
+        </div>
+      </section>
+
+      <footer class="new-game-footer">
+        <button class="action secondary" data-action="close-new-game" data-i18n="common.cancel">Anuluj</button>
+        <button class="action primary" data-action="confirm-new-game" data-i18n="newGame.start">Rozpocznij grę</button>
+      </footer>
+    </section>
+  </div>
+
+  <div id="tutorial-modal" class="tutorial-modal hidden">
+    <section class="tutorial-card" aria-labelledby="tutorial-title">
+      <header class="tutorial-head">
+        <div><div class="eyebrow" data-i18n="tutorial.eyebrow">SAMOUCZEK KROK PO KROKU</div><h2 id="tutorial-title"></h2></div>
+        <button class="icon-button" data-action="tutorial-close" data-i18n-aria="common.close" aria-label="Zamknij">×</button>
+      </header>
+      <div id="tutorial-progress" class="tutorial-progress"></div>
+      <div id="tutorial-visual" class="tutorial-visual"></div>
+      <div class="tutorial-copy"><h3 id="tutorial-step-title"></h3><p id="tutorial-step-body"></p></div>
+      <footer class="tutorial-actions">
+        <button id="tutorial-prev" class="action secondary" data-action="tutorial-prev"></button>
+        <button id="tutorial-next" class="action primary" data-action="tutorial-next"></button>
+      </footer>
+    </section>
+  </div>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="eyebrow" data-i18n="common.eyebrow">OFFLINE · KARTY · DURZEŃ</div>
+        <h1>DUREŃ</h1>
+      </div>
+
+      <div class="top-stats">
+        <div class="top-stat"><span data-i18n="top.round">Rozdanie</span><b id="stat-round">—</b></div>
+        <div class="top-stat"><span data-i18n="top.deckLeft">Talon</span><b id="stat-deck">—</b></div>
+        <div id="stat-trump-box" class="top-stat top-stat-primary"><span data-i18n="top.trump">Atut</span><b id="stat-trump">—</b></div>
+        <div class="top-stat"><span data-i18n="top.attacker">Atakuje</span><b id="stat-attacker">—</b><small id="stat-defender">—</small></div>
+      </div>
+
+      <div class="top-actions">
+        <span id="phase-chip" class="phase-chip">—</span>
+        <label class="speed-control" for="speed-select">
+          <span data-i18n="top.speed">Tempo botów</span>
+          <select id="speed-select">
+            <option value="slow">Wolno</option>
+            <option value="normal">Normalnie</option>
+            <option value="fast">Szybko</option>
+          </select>
+        </label>
+        <button class="ghost-button" data-action="open-settings"><span>⚙ </span><span data-i18n="top.options">Opcje</span></button>
+        <button class="ghost-button" data-action="open-main-menu" data-i18n="top.menu">Menu</button>
+      </div>
+    </header>
+
+    <section class="game-layout">
+      <aside class="helper-panel">
+        <div class="helper-head">
+          <div>
+            <div class="eyebrow" data-i18n="helper.eyebrow">PANEL STOŁU</div>
+            <strong data-i18n="helper.title">Pomocnik</strong>
+          </div>
+          <div id="rule-badges" class="rule-badges"></div>
+        </div>
+        <section id="tutorial-coach" class="tutorial-coach hidden"></section>
+        <div class="helper-tabs">
+          <button class="helper-tab active" data-helper-tab="players" data-i18n="helper.players">Gracze</button>
+          <button class="helper-tab" data-helper-tab="log" data-i18n="helper.log">Dziennik</button>
+          <button class="helper-tab" data-helper-tab="rules" data-i18n="helper.rules">Zasady</button>
+        </div>
+        <section class="helper-pane" data-helper-pane="players">
+          <div id="score-list" class="score-list"></div>
+          <div class="helper-explainer">
+            <span class="calc-label" data-i18n="helper.phase">Aktualna faza</span>
+            <b id="helper-phase">—</b>
+            <p id="helper-status">—</p>
+          </div>
+        </section>
+        <section class="helper-pane hidden" data-helper-pane="log">
+          <div class="helper-log-head"><span class="calc-label" data-i18n="common.handHistory">Historia rozdania</span></div>
+          <div id="log" class="log helper-log"></div>
+        </section>
+        <section class="helper-pane hidden" data-helper-pane="rules">
+          <div id="rules-summary" class="rules-summary"></div>
+        </section>
+      </aside>
+
+      <section class="table-wrap">
+        <div class="felt-table"></div>
+        <div class="table-stage">
+          <div class="center-brand">DURAK</div>
+          <div id="talon-zone" class="talon-zone"></div>
+          <div id="discard-zone" class="discard-zone"></div>
+          <div id="table-cards" class="table-cards" data-i18n-aria="common.tableCards" aria-label="Karty na stole"></div>
+          <div id="seats"></div>
+        </div>
+
+        <div class="action-bar">
+          <div class="action-content">
+            <div id="status-text" class="status-text" role="status" aria-live="polite"></div>
+            <div id="beginner-tip" class="beginner-tip hidden"></div>
+            <div id="controls" class="controls"></div>
+          </div>
+        </div>
+
+        <div class="human-hand-slot">
+          <div id="human-hand" class="human-hand" data-i18n-aria="common.yourCards" aria-label="Twoje karty"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="result-modal" class="result-modal hidden">
+    <div class="result-card">
+      <div class="eyebrow" data-i18n="common.roundSummary">PODSUMOWANIE ROZDANIA</div>
+      <div id="result-mark" class="result-mark">♠</div>
+      <h2 id="result-title"></h2>
+      <div id="result-body" class="result-body"></div>
+      <button class="action primary wide" data-action="next-round" data-i18n="actions.nextRound">Następne rozdanie</button>
+      <button class="action secondary wide" data-action="open-main-menu" data-i18n="actions.backToMenu">Wróć do menu</button>
+    </div>
+  </div>
+
+  <div id="settings-modal" class="settings-modal hidden">
+    <div class="settings-card">
+      <div class="settings-head">
+        <div>
+          <div class="eyebrow" data-i18n="settings.eyebrow">USTAWIENIA GRY</div>
+          <h2 data-i18n="settings.title">Opcje</h2>
+        </div>
+        <button class="icon-button" data-action="close-settings" data-i18n-aria="common.close" aria-label="Zamknij">×</button>
+      </div>
+
+      <div class="settings-grid">
+        <section>
+          <h3 data-i18n="settings.rules">Zasady</h3>
+          <label class="toggle-row"><input type="checkbox" data-setting="throwInAll"><span><b data-i18n="settings.throwInAll">Dorzucają wszyscy</b><small data-i18n="settings.throwInAllLongDesc">Gdy wyłączone, dorzucać może wyłącznie gracz, który zaczął atak.</small></span></label>
+          <label class="toggle-row"><input type="checkbox" data-setting="transfer"><span><b data-i18n="settings.transfer">Przerzucanie (perewod)</b><small data-i18n="settings.transferLongDesc">Obrońca, który jeszcze niczego nie przebił, może przerzucić atak dalej kartą tej samej rangi.</small></span></label>
+          <label class="toggle-row"><input type="checkbox" data-setting="limitSix"><span><b data-i18n="settings.limitSix">Limit sześciu kart</b><small data-i18n="settings.limitSixLongDesc">Bez limitu atak może trwać aż do wyczerpania ręki obrońcy.</small></span></label>
+        </section>
+
+        <section>
+          <h3 data-i18n="settings.learning">Nauka i tempo</h3>
+          <label class="toggle-row"><input type="checkbox" data-setting="beginnerMode"><span><b data-i18n="settings.beginner">Tryb początkującego</b><small data-i18n="settings.beginnerDesc">Podpowiedzi w pasku akcji i podświetlanie legalnych kart.</small></span></label>
+          <label class="select-row"><span><b data-i18n="settings.speed">Tempo botów</b><small data-i18n="settings.speedDesc">Jak szybko boty wykonują swoje ruchy.</small></span><select data-setting="speed"><option value="slow">Wolno</option><option value="normal">Normalnie</option><option value="fast">Szybko</option></select></label>
+        </section>
+
+        <section>
+          <h3 data-i18n="settings.appearance">Wygląd</h3>
+          <label class="toggle-row"><input type="checkbox" data-setting="animations"><span><b data-i18n="settings.animations">Animacje kart</b><small data-i18n="settings.animationsDesc">Rozdawanie, kładzenie kart i zbieranie stołu.</small></span></label>
+          <label class="toggle-row"><input type="checkbox" data-setting="sounds"><span><b data-i18n="settings.sounds">Dźwięki stołu</b><small data-i18n="settings.soundsDesc">Subtelny odgłos zagrania i zebrania kart.</small></span></label>
+        </section>
+
+        <section>
+          <h3 data-i18n="settings.session">Sesja</h3>
+          <label class="select-row"><span><b data-i18n="settings.language">Język</b><small data-i18n="settings.languageDesc">Interfejs i podpowiedzi samouczka.</small></span>
+            <select data-language-select>
+              <option value="pl">Polski</option>
+              <option value="en">English</option>
+              <option value="de">Deutsch</option>
+              <option value="ru">Русский</option>
+            </select>
+          </label>
+          <label class="toggle-row"><input type="checkbox" data-setting="autoSave"><span><b data-i18n="settings.autoSave">Zapis rozgrywki</b><small data-i18n="settings.autoSaveDesc">Pozwala wrócić do przerwanej partii z menu głównego.</small></span></label>
+        </section>
+      </div>
+
+      <div class="settings-note" data-i18n="settings.savedLocally">Ustawienia zapisują się lokalnie w przeglądarce.</div>
+      <button class="action primary wide" data-action="close-settings" data-i18n="common.done">Gotowe</button>
+    </div>
+  </div>
+
+<div id="mp-overlay" class="mp-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mp-title">
     <section class="mp-card">
       <header class="mp-head">
         <div>
@@ -88,9 +317,10 @@
     </div>
   </div>
 
-  <script src="./mp/core.js?v=20260906-clean1"></script>
-  <script src="./mp/game.js?v=20260906-clean1"></script>
-  <script src="./mp/network-server.js?v=20260906-clean1"></script>
-  <script src="./multiplayer.js?v=20260906-clean1"></script>
+  <script src="./game.js?v=20260908-single1"></script>
+  <script src="./mp/core.js?v=20260908-single1"></script>
+  <script src="./mp/game.js?v=20260908-single1"></script>
+  <script src="./mp/network-server.js?v=20260908-single1"></script>
+  <script src="./multiplayer.js?v=20260908-single1"></script>
 </body>
 </html>
