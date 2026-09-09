@@ -16,7 +16,7 @@
       items: [
         ['handCardW', 'Szerokość karty', '--dev-hand-card-w', 60, 180, 1, 102],
         ['handCardH', 'Wysokość karty', '--dev-hand-card-h', 85, 250, 1, 145],
-        ['handY', 'Pozycja Y ręki', '--dev-hand-y', -120, 80, 1, -17],
+        ['handY', 'Pozycja Y ręki', '--dev-hand-y', -120, 80, 1, -29],
         ['handOverlap', 'Nakładanie kart', '--dev-hand-overlap', -80, 24, 1, -24],
         ['handSlotH', 'Wysokość strefy ręki', '--dev-hand-slot-h', 100, 300, 1, 190],
       ],
@@ -163,6 +163,14 @@
     return true;
   }
 
+  function resetValue(key) {
+    const descriptor = descriptors.get(key);
+    if (!descriptor) return false;
+    setValue(key, descriptor.defaultValue);
+    setStatus(`${descriptor.label}: przywrócono standard (${descriptor.defaultValue}).`);
+    return true;
+  }
+
   function importJSON(raw) {
     try {
       const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -183,7 +191,7 @@
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
     apply();
     syncControls();
-    setStatus('Przywrócono wartości domyślne DEV.');
+    setStatus('Przywrócono wszystkie standardowe wartości DEV.');
   }
 
   async function copyJSON() {
@@ -209,6 +217,7 @@
       <label for="dev-number-${item.key}">${item.label}</label>
       <input type="range" data-dev-key="${item.key}" min="${item.min}" max="${item.max}" step="${item.step}" value="${values[item.key]}" aria-label="${item.label}">
       <input id="dev-number-${item.key}" type="number" data-dev-key="${item.key}" min="${item.min}" max="${item.max}" step="${item.step}" value="${values[item.key]}" aria-label="${item.label} wartość">
+      <button type="button" class="dev-layout-reset-one" data-dev-reset-key="${item.key}" title="Przywróć standard: ${item.defaultValue}" aria-label="Reset ${item.label} do ${item.defaultValue}">↺</button>
     </div>`;
   }
 
@@ -241,6 +250,16 @@
       left: Math.min(maxLeft, Math.max(margin, left)),
       top: Math.min(maxTop, Math.max(margin, top)),
     };
+  }
+
+  function resetPopupPosition() {
+    if (!popup) return false;
+    popup.style.left = '';
+    popup.style.right = '';
+    popup.style.top = '';
+    popup.style.bottom = '';
+    setStatus('Panel DEV wrócił do standardowej pozycji.');
+    return true;
   }
 
   function startDrag(event) {
@@ -307,7 +326,7 @@
       <button id="dev-layout-close" type="button" aria-label="Zamknij DEV">×</button>
     </header>
     <div class="dev-layout-popup-body">
-      <p class="dev-layout-note">Sterowanie działa dla desktopu ≥1181 px. Gra pozostaje aktywna, więc możesz od razu obserwować i testować zmiany. Ustawienia zapisują się lokalnie.</p>
+      <p class="dev-layout-note">Sterowanie działa dla desktopu ≥1181 px. Każde ↺ przywraca standard tylko dla danego parametru. Gra pozostaje aktywna, a ustawienia zapisują się lokalnie.</p>
       <div class="dev-layout-groups">
         ${groups.map((group) => `<section class="dev-layout-group"><h4>${group.title}</h4>${group.items.map((raw) => controlHTML(descriptors.get(raw[0]))).join('')}</section>`).join('')}
       </div>
@@ -316,7 +335,8 @@
         <button type="button" class="dev-primary" data-dev-action="copy">Kopiuj JSON</button>
         <button type="button" data-dev-action="apply-json">Zastosuj JSON</button>
         <button type="button" data-dev-action="refresh-json">Odśwież JSON</button>
-        <button type="button" class="dev-danger" data-dev-action="reset">Reset DEV</button>
+        <button type="button" data-dev-action="reset-position">Reset pozycji panelu</button>
+        <button type="button" class="dev-danger" data-dev-action="reset">Reset wszystko do standardu</button>
       </div>
       <small class="dev-layout-status" id="dev-layout-status" aria-live="polite"></small>
     </div>`;
@@ -348,12 +368,18 @@
     });
 
     popup.addEventListener('click', (event) => {
+      const resetOne = event.target.closest('[data-dev-reset-key]');
+      if (resetOne) {
+        resetValue(resetOne.dataset.devResetKey);
+        return;
+      }
       const button = event.target.closest('[data-dev-action]');
       if (!button) return;
       const action = button.dataset.devAction;
       if (action === 'copy') copyJSON();
       if (action === 'apply-json') importJSON(textarea.value);
       if (action === 'refresh-json') { textarea.value = serialize(); setStatus('JSON odświeżony z bieżących wartości.'); }
+      if (action === 'reset-position') resetPopupPosition();
       if (action === 'reset') reset();
     });
 
@@ -377,6 +403,8 @@
     set: setValue,
     apply,
     reset,
+    resetValue,
+    resetPosition: resetPopupPosition,
     open: openPopup,
     close: closePopup,
     toggle: togglePopup,
