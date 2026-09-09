@@ -52,11 +52,17 @@ try {
   await page.waitForTimeout(40);
   const layoutBefore = await page.evaluate(() => {
     const wrap = document.querySelector('.table-wrap').getBoundingClientRect();
-    const human = document.querySelector('#human-hand .card').getBoundingClientRect();
+    const humanNode = document.querySelector('#human-hand .card');
+    const humanRect = humanNode.getBoundingClientRect();
+    const humanStyle = getComputedStyle(humanNode);
     const nameplate = document.querySelector('.bot-seat .nameplate').getBoundingClientRect();
-    return { wrap:{top:wrap.top,bottom:wrap.bottom}, human:{width:human.width,height:human.height,bottom:human.bottom}, nameplateTop:nameplate.top };
+    return {
+      wrap:{top:wrap.top,bottom:wrap.bottom},
+      human:{cssWidth:parseFloat(humanStyle.width),cssHeight:parseFloat(humanStyle.height),bottom:humanRect.bottom},
+      nameplateTop:nameplate.top,
+    };
   });
-  assert.ok(layoutBefore.human.width >= 100, `desktop hand card should be slightly larger than old 94px width, got ${layoutBefore.human.width}`);
+  assert.ok(layoutBefore.human.cssWidth >= 100, `desktop hand card should be slightly larger than old 94px width, got ${layoutBefore.human.cssWidth}`);
   closeEnough(layoutBefore.human.bottom, layoutBefore.wrap.bottom - 29, 9, 'human card lower edge should sit on the inner felt line');
   assert.ok(layoutBefore.nameplateTop - layoutBefore.wrap.top >= 28, 'opponent nameplate should sit inside the felt, not on the table rim');
 
@@ -67,12 +73,15 @@ try {
   await page.evaluate(() => window.Durak.game.showMainMenu()); // freezes bot timer without disturbing the rendered table
 
   const playedLayout = await page.evaluate(() => {
-    const human = document.querySelector('#human-hand .card').getBoundingClientRect();
-    const table = document.querySelector('#table-cards .card').getBoundingClientRect();
-    return { human:{width:human.width,height:human.height}, table:{width:table.width,height:table.height} };
+    const humanStyle = getComputedStyle(document.querySelector('#human-hand .card'));
+    const tableStyle = getComputedStyle(document.querySelector('#table-cards .card'));
+    return {
+      human:{width:parseFloat(humanStyle.width),height:parseFloat(humanStyle.height)},
+      table:{width:parseFloat(tableStyle.width),height:parseFloat(tableStyle.height)},
+    };
   });
-  closeEnough(playedLayout.table.width, playedLayout.human.width, 1, 'table and hand card width');
-  closeEnough(playedLayout.table.height, playedLayout.human.height, 1, 'table and hand card height');
+  closeEnough(playedLayout.table.width, playedLayout.human.width, 0.1, 'table and hand card CSS width');
+  closeEnough(playedLayout.table.height, playedLayout.human.height, 0.1, 'table and hand card CSS height');
 
   await page.waitForTimeout(330);
   await page.evaluate(() => window.Durak.game.refresh());
