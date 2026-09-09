@@ -638,6 +638,42 @@
     },
   };
 
+  const COACH_GUIDE_COPY = {
+    pl: {
+      goalLabel: 'Cel', moveLabel: 'Zagraj / zrób', whyLabel: 'Dlaczego',
+      goal: 'Pozbądź się wszystkich kart przed przeciwnikiem. Ostatni gracz z kartami zostaje Durniem.',
+      moveCard: 'Zagraj {card}.', moveTake: 'Kliknij „Biorę”.', movePass: 'Zakończ dorzucanie.', moveWait: 'Obserwuj ruch przeciwnika.', moveEnd: 'Przejdź do następnego rozdania albo zakończ trening.',
+      whyAttack: '{card} to najtańsza sensowna karta nieatutowa. Pozbywasz się słabej karty i zachowujesz atuty do obrony.',
+      whyDefense: '{card} to najtańsza legalna karta, która przebija atak. Zachowujesz mocniejsze karty na trudniejsze obrony.',
+      whyThrowIn: '{card} pasuje rangą do stołu i nie jest atutem, więc zwiększa koszt obrony przeciwnika bez marnowania cennej karty.',
+    },
+    en: {
+      goalLabel: 'Goal', moveLabel: 'Play / do', whyLabel: 'Why',
+      goal: 'Get rid of every card before your opponent. The last player still holding cards becomes the Fool.',
+      moveCard: 'Play {card}.', moveTake: 'Choose “I take”.', movePass: 'Finish throwing in.', moveWait: 'Watch the opponent’s move.', moveEnd: 'Start the next round or end the practice game.',
+      whyAttack: '{card} is the cheapest useful non-trump. You shed a weak card while saving trumps for defence.',
+      whyDefense: '{card} is the cheapest legal card that beats the attack. Stronger cards stay available for harder defences.',
+      whyThrowIn: '{card} matches a rank already on the table and is not a trump, so it raises the defender’s cost without wasting a valuable card.',
+    },
+    de: {
+      goalLabel: 'Ziel', moveLabel: 'Spiele / mache', whyLabel: 'Warum',
+      goal: 'Werde alle Karten vor deinem Gegner los. Wer zuletzt noch Karten hält, wird der Narr.',
+      moveCard: 'Spiele {card}.', moveTake: 'Wähle „Ich nehme”.', movePass: 'Beende das Dazulegen.', moveWait: 'Beobachte den Zug des Gegners.', moveEnd: 'Starte die nächste Runde oder beende das Training.',
+      whyAttack: '{card} ist die günstigste sinnvolle Nicht-Trumpfkarte. Du wirst eine schwache Karte los und sparst Trumpf für die Verteidigung.',
+      whyDefense: '{card} ist die günstigste legale Karte, die den Angriff schlägt. Stärkere Karten bleiben für schwierigere Verteidigungen erhalten.',
+      whyThrowIn: '{card} hat einen Rang, der bereits auf dem Tisch liegt, und ist kein Trumpf. So verteuerst du die Verteidigung ohne eine wertvolle Karte zu verschwenden.',
+    },
+    ru: {
+      goalLabel: 'Цель', moveLabel: 'Сыграй / сделай', whyLabel: 'Почему',
+      goal: 'Избавься от всех карт раньше соперника. Последний игрок с картами становится дураком.',
+      moveCard: 'Сыграй {card}.', moveTake: 'Нажми «Беру».', movePass: 'Закончи подкидывание.', moveWait: 'Наблюдай за ходом соперника.', moveEnd: 'Начни следующий раунд или закончи тренировку.',
+      whyAttack: '{card} — самая дешёвая подходящая некозырная карта. Ты избавляешься от слабой карты и сохраняешь козыри для защиты.',
+      whyDefense: '{card} — самая дешёвая допустимая карта, которая отбивает атаку. Более сильные карты останутся для сложной защиты.',
+      whyThrowIn: '{card} подходит по рангу к картам на столе и не является козырем, поэтому повышает цену защиты без потери ценной карты.',
+    },
+  };
+  Object.entries(COACH_GUIDE_COPY).forEach(([language, copy]) => Object.assign(LANGUAGES[language].tutorial.coach, copy));
+
   let activeLanguage = 'pl';
 
   function lookup(language, key) {
@@ -1174,7 +1210,7 @@
       if (state.defender === index) classes.push('is-defender');
       if (state.out[index]) classes.push('is-out');
       const bubble = textOf(state.bubbles[index]);
-      return `<div class="${classes.join(' ')}">
+      return `<div class="${classes.join(' ')}" data-player-index="${index}">
         <div class="nameplate">
           <div class="avatar">${initials(player.name)}</div>
           <div><b class="player-name">${player.name}${badgeFor(state, index)}</b><span class="player-role">${roleFor(state, index)}</span></div>
@@ -1222,15 +1258,53 @@
   }
 
   /* ---------- stół ---------- */
+  function collectionTarget(state) {
+    if (state.collecting === 'discard') {
+      return { element: el('discard-zone')?.querySelector('.discard-stack'), name: 'discard' };
+    }
+    if (state.collecting === 'take') {
+      if (state.defender === 0) return { element: document.querySelector('.human-hand-slot'), name: 'player-0' };
+      return {
+        element: document.querySelector(`.bot-seat[data-player-index="${state.defender}"] .bot-hand`),
+        name: `player-${state.defender}`,
+      };
+    }
+    return null;
+  }
+
+  function applyCollectionMotion(state, root) {
+    const target = collectionTarget(state);
+    if (!target?.element) {
+      root.style.removeProperty('--collect-duration');
+      return;
+    }
+    const targetRect = target.element.getBoundingClientRect();
+    const targetX = targetRect.left + targetRect.width / 2;
+    const targetY = targetRect.top + targetRect.height / 2;
+    const duration = Math.round(500 * (D.SPEEDS[state.settings.speed] || 1));
+    root.style.setProperty('--collect-duration', `${duration}ms`);
+    root.querySelectorAll('.table-pair').forEach((node, index) => {
+      const rect = node.getBoundingClientRect();
+      node.style.setProperty('--collect-x', `${targetX - (rect.left + rect.width / 2)}px`);
+      node.style.setProperty('--collect-y', `${targetY - (rect.top + rect.height / 2)}px`);
+      node.style.setProperty('--collect-rotation', `${index % 2 ? -8 : 8}deg`);
+      node.dataset.collectTarget = target.name;
+    });
+  }
+
   function renderTable(state) {
     const root = el('table-cards');
     if (!root) return;
+    const previousCardIds = new Set(
+      Array.from(root.querySelectorAll('.card[data-card-id]'), (node) => node.dataset.cardId),
+    );
     root.classList.remove('collect-discard', 'collect-take');
     if (state.collecting === 'discard') root.classList.add('collect-discard');
     if (state.collecting === 'take') root.classList.add('collect-take');
 
     if (!state.table.length) {
       root.innerHTML = state.round > 0 ? `<span class="table-empty">${T('common.tableCards')}</span>` : '';
+      root.style.removeProperty('--collect-duration');
       return;
     }
     const humanDefends = state.phase === 'defense' && state.defender === 0 && !state.transferMode;
@@ -1239,10 +1313,14 @@
       if (!pair.defense) classes.push('unbeaten');
       if (humanDefends && !pair.defense && index === state.defenseTarget) classes.push('targeted');
       if (humanDefends && !pair.defense) classes.push('selectable');
-      const attack = cardHTML(pair.attack, { static: true, className: `attack-card${pair.isNew ? ' table-enter' : ''}` });
-      const defense = pair.defense ? cardHTML(pair.defense, { static: true, className: `defense-card${pair.defenseNew ? ' table-enter' : ''}` }) : '';
+      const attackEntering = !!pair.isNew && !previousCardIds.has(pair.attack.id);
+      const defenseEntering = !!pair.defenseNew && !!pair.defense && !previousCardIds.has(pair.defense.id);
+      const attack = cardHTML(pair.attack, { static: true, className: `attack-card${attackEntering ? ' table-enter' : ''}` });
+      const defense = pair.defense ? cardHTML(pair.defense, { static: true, className: `defense-card${defenseEntering ? ' table-enter' : ''}` }) : '';
       return `<div class="${classes.join(' ')}" data-pair-index="${index}">${attack}${defense}</div>`;
     }).join('');
+    if (state.collecting) applyCollectionMotion(state, root);
+    else root.style.removeProperty('--collect-duration');
   }
 
   /* ---------- ręka gracza ---------- */
@@ -1381,9 +1459,13 @@
     }
     root.classList.remove('hidden');
     const coach = tutorial.coach;
-    const rule = coach.rule ? `<div class="coach-rule">${coach.rule}</div>` : '';
     root.innerHTML = `<div class="coach-kicker"><small>${T('tutorial.guided')}</small><span class="coach-round">${T('tutorial.practice')} · ${state.round}</span></div>
-      <b>${coach.title}</b><p>${coach.body}</p>${rule}
+      <b>${coach.title}</b>
+      <div class="coach-plan">
+        <div class="coach-step coach-goal"><small>${T('tutorial.coach.goalLabel')}</small><p>${coach.goal}</p></div>
+        <div class="coach-step coach-move"><small>${T('tutorial.coach.moveLabel')}</small><strong>${coach.move}</strong></div>
+        <div class="coach-step coach-why"><small>${T('tutorial.coach.whyLabel')}</small><p>${coach.why}</p></div>
+      </div>
       <div class="coach-actions"><button data-action="tutorial-exit" type="button">${T('tutorial.exit')}</button></div>`;
   }
 
@@ -1911,7 +1993,7 @@
     U.render(state);
 
     if (collectTimer) window.clearTimeout(collectTimer);
-    const delay = state.settings.animations ? pacedDelay(420) : 10;
+    const delay = state.settings.animations ? pacedDelay(520) : 10;
     collectTimer = window.setTimeout(() => {
       state.table = [];
       state.collecting = null;
@@ -2223,6 +2305,22 @@
     return null;
   }
 
+  function coachMove(key, hint) {
+    if (hint) return T('tutorial.coach.moveCard', { card: R.cardLabel(hint) });
+    if (key === 'defense') return T('tutorial.coach.moveTake');
+    if (['attackAgain', 'throwIn', 'taking'].includes(key)) return T('tutorial.coach.movePass');
+    if (key === 'end') return T('tutorial.coach.moveEnd');
+    return T('tutorial.coach.moveWait');
+  }
+
+  function coachWhy(key, hint, fallback) {
+    if (!hint) return fallback;
+    const vars = { card: R.cardLabel(hint) };
+    if (key === 'defense' || key === 'transfer') return T('tutorial.coach.whyDefense', vars);
+    if (['attackAgain', 'throwIn', 'taking'].includes(key)) return T('tutorial.coach.whyThrowIn', vars);
+    return T('tutorial.coach.whyAttack', vars);
+  }
+
   function updateCoach() {
     if (!state.tutorial.active) {
       state.tutorial.coach = null;
@@ -2231,7 +2329,6 @@
     }
     const hint = coachHint();
     state.tutorial.hintCardId = hint ? hint.id : null;
-    const rule = hint ? T('tutorial.coach.hintPrefix', { card: R.cardLabel(hint) }) : '';
     let key = 'wait';
     if (state.phase === 'end') key = 'end';
     else if (state.round === 1 && state.phase === 'attack' && state.attacker === 0 && !state.table.length && !state.log.some((e) => e.key === 'log.attack')) key = 'intro';
@@ -2243,10 +2340,13 @@
     } else if (state.phase === 'throwin' && state.thrower === 0) {
       key = state.taking ? 'taking' : (state.attacker === 0 ? 'attackAgain' : 'throwIn');
     }
+    const body = T(`tutorial.coach.${key}`);
     state.tutorial.coach = {
       title: T(`tutorial.coach.${key}Title`),
-      body: T(`tutorial.coach.${key}`),
-      rule: key === 'wait' || key === 'end' || key === 'intro' ? '' : rule,
+      body,
+      goal: T('tutorial.coach.goal'),
+      move: coachMove(key, hint),
+      why: coachWhy(key, hint, body),
     };
   }
 

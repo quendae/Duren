@@ -521,7 +521,13 @@ button.card { padding: 0; }
 .coach-round { padding:4px 8px; border:1px solid rgba(221,183,92,.34); border-radius:999px; color:#f1d98f; background:rgba(180,136,50,.12); font-size:9px; font-weight:900; letter-spacing:.08em; }
 .tutorial-coach b { display:block; margin-top:6px; font:800 17px/1.2 Georgia,serif; }
 .tutorial-coach p { margin:7px 0 10px; color:#c7d2cb; font-size:12px; line-height:1.55; }
-.coach-rule { margin:10px 0; padding:9px 10px; border-left:3px solid #d7ae52; border-radius:0 7px 7px 0; color:#e9e1c9; background:rgba(218,177,82,.09); font-size:11px; line-height:1.5; }
+.coach-plan { display:grid; gap:7px; margin:10px 0 8px; }
+.coach-step { padding:9px 10px; border:1px solid rgba(255,255,255,.08); border-radius:9px; background:rgba(255,255,255,.025); }
+.coach-step small { display:block; margin-bottom:4px; }
+.coach-step p { margin:0; color:#cbd6cf; font-size:11px; line-height:1.48; }
+.coach-step strong { display:block; color:#f3e3ac; font-size:13px; line-height:1.4; }
+.coach-move { border-color:rgba(220,181,92,.38); background:rgba(218,177,82,.08); }
+.coach-why { border-left:3px solid #d7ae52; }
 .coach-actions { display:flex; justify-content:space-between; align-items:center; gap:8px; }
 .tutorial-coach button { border:0; padding:6px 9px; color:#b6c3bb; background:transparent; cursor:pointer; font-size:9px; font-weight:800; }
 .tutorial-coach button.coach-primary {
@@ -537,12 +543,18 @@ button.card { padding: 0; }
 /* ---------- Animations ---------- */
 .deal-card { animation: dealIn .5s cubic-bezier(.16,.78,.26,1) both; animation-delay: calc(var(--card-index, 0) * 55ms); }
 .table-enter { animation: cardDrop .28s cubic-bezier(.2,.8,.3,1) both; }
-.table-cards.collect-discard .table-pair { animation: collectRight .5s ease-in forwards; }
-.table-cards.collect-take .table-pair { animation: collectDown .5s ease-in forwards; }
+.table-cards.collect-discard .table-pair,
+.table-cards.collect-take .table-pair {
+  animation: collectToTarget var(--collect-duration,500ms) cubic-bezier(.32,0,.18,1) forwards;
+  will-change: transform, opacity;
+}
 @keyframes dealIn { from { opacity:0; transform:translateY(-180px) scale(.6) rotate(-9deg); } to { opacity:1; transform:translateY(0) scale(1) rotate(0); } }
 @keyframes cardDrop { from { opacity:.15; transform:translateY(-60px) scale(.86) rotate(6deg); } to { opacity:1; transform:translateY(0) scale(1) rotate(0); } }
-@keyframes collectRight { to { transform:translate(320px,0) scale(.62) rotate(14deg); opacity:0; } }
-@keyframes collectDown { to { transform:translate(0,300px) scale(.62) rotate(-8deg); opacity:0; } }
+@keyframes collectToTarget {
+  0% { transform:translate(0,0) scale(1) rotate(0); opacity:1; }
+  82% { opacity:1; }
+  100% { transform:translate(var(--collect-x,0px),var(--collect-y,0px)) scale(.46) rotate(var(--collect-rotation,0deg)); opacity:0; }
+}
 @keyframes reactionPop { from { opacity:0; transform:translateX(-50%) translateY(5px) scale(.82); } to { opacity:1; transform:translateX(-50%) translateY(0) scale(1); } }
 .no-animations *, .no-animations *::before, .no-animations *::after {
   animation-duration: .001ms !important; animation-delay: 0ms !important; transition-duration: .001ms !important;
@@ -561,6 +573,20 @@ button.card { padding: 0; }
   min-height: 42px; border: 2px solid rgba(6,14,10,.82); border-radius: 999px;
   background: linear-gradient(180deg,#d8ba62,#9b702b);
   box-shadow: inset 0 1px rgba(255,255,255,.30), 0 2px 7px rgba(0,0,0,.35);
+}
+
+/* ---------- Desktop table geometry ---------- */
+@media (min-width: 1181px) {
+  .human-hand-slot { transform:translateY(-17px); }
+  .card { width:102px; height:145px; margin-left:-24px; }
+  .table-pair, .table-pair .card { width:102px; height:145px; }
+  .table-pair .card.defense-card { transform:translate(21px,22px) rotate(7deg); }
+  .table-pair .card .corner b { font-size:18px; }
+  .table-pair .card .corner i { font-size:16px; }
+  .table-pair .card .pip { font-size:48px; }
+  .bot-seat.slot-top { top:34px; }
+  .bot-seat.slot-left { left:34px; top:34px; }
+  .bot-seat.slot-right { right:34px; top:34px; }
 }
 
 /* ---------- Responsive ---------- */
