@@ -53,3 +53,5 @@ jobs:
         run: node tests/multiplayer_smoke.mjs
       - name: Shared QQND server browser smoke
         run: node tests/shared_server_smoke.mjs
+      - name: Desktop motion and tutorial UX smoke
+        run: node tests/ux_motion_tutorial_smoke.mjs
