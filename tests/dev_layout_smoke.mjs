@@ -45,6 +45,7 @@ try {
   assert.equal(await page.locator('#dev-layout-button').isVisible(), true, 'DEV must have its own topbar button');
   assert.equal(await page.locator('#dev-layout-section').count(), 0, 'DEV must no longer live inside Options');
   assert.equal(await page.locator('#dev-layout-popup').isVisible(), false, 'DEV popup starts closed');
+  assert.equal((await page.evaluate(() => window.DurakDevLayout.defaults.handY)), -29, 'standard hand Y must be -29');
 
   await page.click('#dev-layout-button');
   await page.waitForSelector('#dev-layout-popup:not(.hidden)');
@@ -67,10 +68,20 @@ try {
   const popupAfter = await page.locator('#dev-layout-popup').boundingBox();
   assert.ok(Math.abs(popupAfter.x - popupBefore.x) > 40 || Math.abs(popupAfter.y - popupBefore.y) > 40, 'DEV popup must be draggable');
 
+  await page.click('[data-dev-action="reset-position"]');
+  const popupReset = await page.locator('#dev-layout-popup').boundingBox();
+  assert.ok(Math.abs(popupReset.x - popupBefore.x) < 12 && Math.abs(popupReset.y - popupBefore.y) < 12, 'popup position reset must restore standard location');
+
   await setNumber(page, 'handCardW', 126);
   await setNumber(page, 'handY', -35);
   await setNumber(page, 'botBackW', 61);
   await setNumber(page, 'tableCardW', 126);
+
+  // Per-control reset restores just one standard value.
+  await page.click('[data-dev-reset-key="handY"]');
+  assert.equal(await page.locator('#dev-layout-popup input[type="number"][data-dev-key="handY"]').inputValue(), '-29');
+  assert.equal(await page.evaluate(() => window.DurakDevLayout.values.handY), -29);
+  await setNumber(page, 'handY', -35);
 
   const live = await page.evaluate(() => ({
     hand: getComputedStyle(document.querySelector('#human-hand .card')).width,
@@ -98,7 +109,7 @@ try {
   assert.equal(persisted.values.handY, -35);
 
   await page.click('#dev-layout-button');
-  const imported = { version:1, profile:'desktop', values:{ handCardW:118, tableCardW:118, seatSideX:52 } };
+  const imported = { version:1, profile:'desktop', values:{ handCardW:118, tableCardW:118, seatSideX:52, handY:-8 } };
   await page.locator('#dev-layout-json').fill(JSON.stringify(imported));
   await page.click('[data-dev-action="apply-json"]');
   const afterImport = await page.evaluate(() => ({
@@ -117,6 +128,7 @@ try {
   }));
   assert.equal(reset.hand, '102px', 'reset must restore DEV desktop defaults');
   assert.equal(reset.values.handCardW, 102);
+  assert.equal(reset.values.handY, -29, 'global reset must restore standard hand Y');
   assert.equal(reset.saved, null, 'reset must remove persisted DEV override');
 
   await page.click('#dev-layout-close');
@@ -129,7 +141,7 @@ try {
   const mobileWidth = await page.evaluate(() => getComputedStyle(document.querySelector('#human-hand .card')).width);
   assert.notEqual(mobileWidth, '140px', 'desktop DEV override must not leak into smaller breakpoints');
 
-  console.log('DEV layout popup smoke: PASS');
+  console.log('DEV layout popup/reset smoke: PASS');
   await context.close();
 } finally {
   await browser.close();
