@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - scripts/apply-ux-motion-tutorial.mjs
+      - tests/ux_motion_tutorial_smoke.mjs
       - .github/workflows/apply-ux-motion-tutorial.yml
   workflow_dispatch:
 
