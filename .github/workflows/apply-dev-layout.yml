@@ -1,0 +1,55 @@
+name: Apply Duren DEV layout
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/apply-dev-layout-entry.mjs
+      - .github/workflows/apply-dev-layout.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Patch index
+        run: node scripts/apply-dev-layout-entry.mjs
+      - name: Syntax checks
+        run: |
+          node --check dev-layout.js
+          node --check game.js
+          node --check multiplayer.js
+          grep -q 'dev-layout.css?v=20260909-dev1' index.html
+          grep -q 'dev-layout.js?v=20260909-dev1' index.html
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Run regression suite
+        run: |
+          node tests/single_runtime_smoke.mjs
+          node tests/resume_smoke.mjs
+          node tests/multiplayer_smoke.mjs
+          node tests/shared_server_smoke.mjs
+          node tests/ux_motion_tutorial_smoke.mjs
+          node tests/dev_layout_smoke.mjs
+      - name: Commit verified index
+        run: |
+          rm -rf node_modules
+          git config user.name "qqnd-ci"
+          git config user.email "actions@users.noreply.github.com"
+          git reset
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: wire desktop DEV layout controls [skip ci]"
+          git push origin HEAD:main
