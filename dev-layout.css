@@ -3,7 +3,7 @@
   --dev-topbar-h: 92px;
   --dev-hand-card-w: 102px;
   --dev-hand-card-h: 145px;
-  --dev-hand-y: -17px;
+  --dev-hand-y: -29px;
   --dev-hand-overlap: -24px;
   --dev-hand-slot-h: 190px;
   --dev-table-card-w: 102px;
@@ -258,8 +258,8 @@
 }
 .dev-layout-control {
   display: grid;
-  grid-template-columns: minmax(145px,1fr) minmax(125px,1.25fr) 72px;
-  gap: 8px;
+  grid-template-columns: minmax(135px,1fr) minmax(115px,1.25fr) 68px 28px;
+  gap: 7px;
   align-items: center;
   min-height: 34px;
   border-top: 1px solid rgba(255,255,255,.045);
@@ -283,6 +283,24 @@
   background: #101c16;
   font-size: 10px;
   font-variant-numeric: tabular-nums;
+}
+.dev-layout-reset-one {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(216,179,95,.20);
+  border-radius: 7px;
+  color: #d9c27c;
+  background: rgba(216,179,95,.05);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+}
+.dev-layout-reset-one:hover {
+  color: #20190a;
+  border-color: transparent;
+  background: #d8b85e;
 }
 .dev-layout-json {
   width: 100%;
@@ -340,6 +358,6 @@
 
 @media (min-width: 1181px) and (max-width: 1320px) {
   .dev-layout-popup { width: min(460px, calc(100vw - 24px)); right: 12px; }
-  .dev-layout-control { grid-template-columns: 1fr 66px; }
+  .dev-layout-control { grid-template-columns: minmax(0,1fr) 66px 28px; }
   .dev-layout-control label { grid-column: 1 / -1; }
 }
