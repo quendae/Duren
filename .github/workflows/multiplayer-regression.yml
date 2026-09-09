@@ -23,6 +23,8 @@ jobs:
           test -f index.html
           test -f game.css
           test -f game.js
+          test -f dev-layout.css
+          test -f dev-layout.js
           test -f multiplayer.css
           test -f multiplayer.js
           test -f mp/core.js
@@ -33,11 +35,14 @@ jobs:
           test ! -e mp/network.js
           test ! -e mp/shared-finalize.js
           node --check game.js
+          node --check dev-layout.js
           node --check multiplayer.js
           node --check mp/core.js
           node --check mp/game.js
           node --check mp/network-server.js
-          ! grep -R -E 'durniak-offline\.html|<iframe|contentWindow|contentDocument|frameWindow|RTCPeerConnection|cloudflare-signaling' index.html game.js multiplayer.js mp/core.js mp/game.js mp/network-server.js
+          ! grep -R -E 'durniak-offline\.html|<iframe|contentWindow|contentDocument|frameWindow|RTCPeerConnection|cloudflare-signaling' index.html game.js dev-layout.js multiplayer.js mp/core.js mp/game.js mp/network-server.js
+          grep -q 'dev-layout.css?v=20260909-dev1' index.html
+          grep -q 'dev-layout.js?v=20260909-dev1' index.html
           grep -q 'wss://api.qqnd.fyi/api/v1/ws' mp/network-server.js
           grep -q "type: 'game.state.commit'" mp/network-server.js
           grep -q "type: 'game.state.publish'" mp/network-server.js
@@ -55,3 +60,5 @@ jobs:
         run: node tests/shared_server_smoke.mjs
       - name: Desktop motion and tutorial UX smoke
         run: node tests/ux_motion_tutorial_smoke.mjs
+      - name: Desktop DEV layout smoke
+        run: node tests/dev_layout_smoke.mjs
