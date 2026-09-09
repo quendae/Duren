@@ -1,0 +1,243 @@
+:root {
+  --dev-sidebar-w: 350px;
+  --dev-topbar-h: 92px;
+  --dev-hand-card-w: 102px;
+  --dev-hand-card-h: 145px;
+  --dev-hand-y: -17px;
+  --dev-hand-overlap: -24px;
+  --dev-hand-slot-h: 190px;
+  --dev-table-card-w: 102px;
+  --dev-table-card-h: 145px;
+  --dev-table-x: 0px;
+  --dev-table-y: 0px;
+  --dev-table-zone-w: 760px;
+  --dev-table-gap-x: 20px;
+  --dev-table-gap-y: 16px;
+  --dev-defense-x: 21px;
+  --dev-defense-y: 22px;
+  --dev-seat-top-y: 34px;
+  --dev-seat-side-y: 34px;
+  --dev-seat-side-x: 34px;
+  --dev-seat-w: 246px;
+  --dev-bot-back-w: 50px;
+  --dev-bot-back-h: 72px;
+  --dev-bot-back-overlap: -27px;
+  --dev-stack-card-w: 74px;
+  --dev-stack-card-h: 104px;
+  --dev-talon-x: 30px;
+  --dev-talon-y: 14px;
+  --dev-discard-x: 30px;
+  --dev-discard-y: 14px;
+  --dev-action-w: 680px;
+  --dev-action-min-h: 108px;
+  --dev-action-space-h: 200px;
+  --dev-action-x: 0px;
+  --dev-action-y: 0px;
+  --dev-brand-size: 62px;
+  --dev-brand-x: 0px;
+  --dev-brand-y: 0px;
+}
+
+/* DEV geometry is intentionally desktop-only. Mobile/tablet breakpoints keep their own layout. */
+@media (min-width: 1181px) {
+  .game-layout {
+    grid-template-columns: var(--dev-sidebar-w) minmax(0,1fr) !important;
+  }
+  .topbar {
+    min-height: var(--dev-topbar-h) !important;
+  }
+
+  .human-hand-slot {
+    flex-basis: var(--dev-hand-slot-h) !important;
+    transform: translateY(var(--dev-hand-y)) !important;
+  }
+  .human-hand .card {
+    width: var(--dev-hand-card-w) !important;
+    height: var(--dev-hand-card-h) !important;
+    margin-left: var(--dev-hand-overlap) !important;
+  }
+  .human-hand .card:first-child {
+    margin-left: 0 !important;
+  }
+
+  .table-cards {
+    width: min(var(--dev-table-zone-w), 90%) !important;
+    gap: var(--dev-table-gap-y) var(--dev-table-gap-x) !important;
+    transform: translate(-50%,-50%) translate(var(--dev-table-x),var(--dev-table-y)) !important;
+  }
+  .table-pair,
+  .table-pair .card {
+    width: var(--dev-table-card-w) !important;
+    height: var(--dev-table-card-h) !important;
+  }
+  .table-pair .card.defense-card {
+    transform: translate(var(--dev-defense-x),var(--dev-defense-y)) rotate(7deg) !important;
+  }
+
+  .bot-seat {
+    width: var(--dev-seat-w) !important;
+  }
+  .bot-seat.slot-top {
+    top: var(--dev-seat-top-y) !important;
+  }
+  .bot-seat.slot-left {
+    left: var(--dev-seat-side-x) !important;
+    top: var(--dev-seat-side-y) !important;
+  }
+  .bot-seat.slot-right {
+    right: var(--dev-seat-side-x) !important;
+    top: var(--dev-seat-side-y) !important;
+  }
+
+  .card-back,
+  .trump-card .card,
+  .talon-empty {
+    width: var(--dev-stack-card-w) !important;
+    height: var(--dev-stack-card-h) !important;
+  }
+  .talon-stack,
+  .discard-stack {
+    height: var(--dev-stack-card-h) !important;
+  }
+  .bot-hand .card-back {
+    width: var(--dev-bot-back-w) !important;
+    height: var(--dev-bot-back-h) !important;
+    margin-right: var(--dev-bot-back-overlap) !important;
+  }
+  .talon-zone {
+    left: var(--dev-talon-x) !important;
+    bottom: var(--dev-talon-y) !important;
+  }
+  .discard-zone {
+    right: var(--dev-discard-x) !important;
+    bottom: var(--dev-discard-y) !important;
+  }
+
+  .action-bar {
+    flex-basis: var(--dev-action-space-h) !important;
+    width: min(var(--dev-action-w), 90%) !important;
+    min-height: var(--dev-action-min-h) !important;
+    transform: translate(var(--dev-action-x),var(--dev-action-y)) !important;
+  }
+  .center-brand {
+    font-size: var(--dev-brand-size) !important;
+    transform: translate(-50%,-50%) translate(var(--dev-brand-x),var(--dev-brand-y)) !important;
+  }
+}
+
+/* ---------- DEV controls ---------- */
+.dev-layout-section {
+  grid-column: 1 / -1;
+  border-color: rgba(216,179,95,.28) !important;
+  background:
+    radial-gradient(circle at 100% 0,rgba(216,179,95,.08),transparent 34%),
+    rgba(255,255,255,.025) !important;
+}
+.dev-layout-details > summary {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  cursor:pointer;
+  list-style:none;
+  color:#f0d47e;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.dev-layout-details > summary::-webkit-details-marker { display:none; }
+.dev-layout-details > summary::after { content:'▾'; opacity:.65; transition:transform .15s ease; }
+.dev-layout-details:not([open]) > summary::after { transform:rotate(-90deg); }
+.dev-layout-note {
+  margin:10px 0 14px;
+  color:#9fb0a6;
+  font-size:10px;
+  line-height:1.45;
+}
+.dev-layout-groups { display:grid; gap:12px; }
+.dev-layout-group {
+  padding:12px;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;
+  background:rgba(3,10,7,.28);
+}
+.dev-layout-group h4 {
+  margin:0 0 8px;
+  color:#d8bf76;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+}
+.dev-layout-control {
+  display:grid;
+  grid-template-columns:minmax(170px,1fr) minmax(180px,1.5fr) 82px;
+  gap:10px;
+  align-items:center;
+  min-height:36px;
+  border-top:1px solid rgba(255,255,255,.045);
+}
+.dev-layout-control:first-of-type { border-top:0; }
+.dev-layout-control label {
+  color:#d4dfd8;
+  font-size:11px;
+  font-weight:750;
+}
+.dev-layout-control input[type='range'] {
+  width:100%;
+  accent-color:#d7b45e;
+}
+.dev-layout-control input[type='number'] {
+  width:100%;
+  padding:6px 8px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:8px;
+  color:#edf5ef;
+  background:#101c16;
+  font-size:11px;
+  font-variant-numeric:tabular-nums;
+}
+.dev-layout-json {
+  width:100%;
+  min-height:120px;
+  margin-top:12px;
+  resize:vertical;
+  padding:10px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:10px;
+  color:#dce8e0;
+  background:#08110d;
+  font:10px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+.dev-layout-actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+.dev-layout-actions button {
+  min-height:34px;
+  padding:7px 10px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:9px;
+  color:#edf5ef;
+  background:rgba(255,255,255,.04);
+  cursor:pointer;
+  font-size:10px;
+  font-weight:850;
+}
+.dev-layout-actions button:hover { background:rgba(255,255,255,.09); }
+.dev-layout-actions .dev-primary { color:#221b09; border-color:transparent; background:linear-gradient(#e5cb74,#b98c35); }
+.dev-layout-actions .dev-danger { color:#ffb3b3; border-color:rgba(255,110,110,.25); background:rgba(111,22,22,.18); }
+.dev-layout-status {
+  display:block;
+  min-height:16px;
+  margin-top:8px;
+  color:#d7c17f;
+  font-size:10px;
+}
+
+@media (max-width: 900px) {
+  .dev-layout-control { grid-template-columns:1fr 90px; }
+  .dev-layout-control label { grid-column:1 / -1; }
+}
