@@ -1,0 +1,54 @@
+name: Apply Duren motion and tutorial UX
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/apply-ux-motion-tutorial.mjs
+      - .github/workflows/apply-ux-motion-tutorial.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply UX patch
+        run: node scripts/apply-ux-motion-tutorial.mjs
+      - name: Syntax checks
+        run: |
+          node --check game.js
+          node --check multiplayer.js
+          node --check mp/core.js
+          node --check mp/game.js
+          node --check mp/network-server.js
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Run full regression suite
+        run: |
+          node tests/single_runtime_smoke.mjs
+          node tests/resume_smoke.mjs
+          node tests/multiplayer_smoke.mjs
+          node tests/shared_server_smoke.mjs
+          node tests/ux_motion_tutorial_smoke.mjs
+      - name: Commit verified runtime
+        run: |
+          rm -rf node_modules
+          git config user.name "qqnd-ci"
+          git config user.email "actions@users.noreply.github.com"
+          git reset
+          git add game.js game.css
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: polish Duren motion tutorial and desktop table UX [skip ci]"
+          git push origin HEAD:main
