@@ -82,9 +82,10 @@
 
   const defaults = Object.fromEntries([...descriptors.values()].map((item) => [item.key, item.defaultValue]));
   let values = { ...defaults };
-  let section = null;
+  let popup = null;
   let textarea = null;
   let statusNode = null;
+  let dragState = null;
 
   function clampValue(descriptor, raw) {
     const number = Number(raw);
@@ -143,9 +144,9 @@
   }
 
   function syncControls() {
-    if (!section) return;
+    if (!popup) return;
     for (const descriptor of descriptors.values()) {
-      section.querySelectorAll(`[data-dev-key="${descriptor.key}"]`).forEach((input) => {
+      popup.querySelectorAll(`[data-dev-key="${descriptor.key}"]`).forEach((input) => {
         if (document.activeElement !== input) input.value = String(values[descriptor.key]);
       });
     }
@@ -211,19 +212,104 @@
     </div>`;
   }
 
-  function mount() {
-    if (document.getElementById('dev-layout-section')) return;
-    const settingsGrid = document.querySelector('#settings-modal .settings-grid');
-    if (!settingsGrid) return;
+  function openPopup() {
+    if (!popup) return;
+    popup.classList.remove('hidden');
+    document.getElementById('dev-layout-button')?.setAttribute('aria-expanded', 'true');
+    syncControls();
+  }
 
-    section = document.createElement('section');
-    section.id = 'dev-layout-section';
-    section.className = 'dev-layout-section';
-    section.innerHTML = `<details class="dev-layout-details" open>
-      <summary><span>DEV · Układ desktop</span><span>live</span></summary>
-      <p class="dev-layout-note">Sterowanie działa tylko dla desktopu ≥1181 px. Zmiany są podglądane natychmiast i zapisywane w tej przeglądarce. Po ustawieniu wyglądu skopiuj JSON i podeślij go — wartości zamienimy potem na nowe defaulty.</p>
+  function closePopup() {
+    if (!popup) return;
+    popup.classList.add('hidden');
+    document.getElementById('dev-layout-button')?.setAttribute('aria-expanded', 'false');
+  }
+
+  function togglePopup() {
+    if (!popup) return;
+    if (popup.classList.contains('hidden')) openPopup();
+    else closePopup();
+  }
+
+  function clampPopupPosition(left, top) {
+    if (!popup) return { left, top };
+    const rect = popup.getBoundingClientRect();
+    const margin = 8;
+    const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+    const maxTop = Math.max(margin, window.innerHeight - 54);
+    return {
+      left: Math.min(maxLeft, Math.max(margin, left)),
+      top: Math.min(maxTop, Math.max(margin, top)),
+    };
+  }
+
+  function startDrag(event) {
+    if (!popup || event.button !== 0 || event.target.closest('button, input, textarea, select')) return;
+    const rect = popup.getBoundingClientRect();
+    dragState = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+    };
+    popup.style.right = 'auto';
+    popup.style.left = `${rect.left}px`;
+    popup.style.top = `${rect.top}px`;
+    popup.classList.add('is-dragging');
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  }
+
+  function moveDrag(event) {
+    if (!popup || !dragState || event.pointerId !== dragState.pointerId) return;
+    const next = clampPopupPosition(event.clientX - dragState.offsetX, event.clientY - dragState.offsetY);
+    popup.style.left = `${next.left}px`;
+    popup.style.top = `${next.top}px`;
+  }
+
+  function stopDrag(event) {
+    if (!popup || !dragState || event.pointerId !== dragState.pointerId) return;
+    dragState = null;
+    popup.classList.remove('is-dragging');
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+  }
+
+  function keepPopupOnScreen() {
+    if (!popup || popup.classList.contains('hidden') || !popup.style.left) return;
+    const rect = popup.getBoundingClientRect();
+    const next = clampPopupPosition(rect.left, rect.top);
+    popup.style.left = `${next.left}px`;
+    popup.style.top = `${next.top}px`;
+  }
+
+  function mount() {
+    if (document.getElementById('dev-layout-popup')) return;
+    const topActions = document.querySelector('.top-actions');
+    if (!topActions) return;
+
+    const trigger = document.createElement('button');
+    trigger.id = 'dev-layout-button';
+    trigger.className = 'ghost-button dev-layout-button';
+    trigger.type = 'button';
+    trigger.textContent = 'DEV';
+    trigger.setAttribute('aria-controls', 'dev-layout-popup');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.title = 'DEV · strojenie układu desktop';
+    const settingsButton = topActions.querySelector('[data-action="open-settings"]');
+    if (settingsButton) topActions.insertBefore(trigger, settingsButton);
+    else topActions.appendChild(trigger);
+
+    popup = document.createElement('aside');
+    popup.id = 'dev-layout-popup';
+    popup.className = 'dev-layout-popup hidden';
+    popup.setAttribute('aria-label', 'DEV · Układ desktop');
+    popup.innerHTML = `<header id="dev-layout-drag-handle" class="dev-layout-popup-head">
+      <div><strong>DEV · Układ desktop</strong><small>LIVE · przeciągnij panel</small></div>
+      <button id="dev-layout-close" type="button" aria-label="Zamknij DEV">×</button>
+    </header>
+    <div class="dev-layout-popup-body">
+      <p class="dev-layout-note">Sterowanie działa dla desktopu ≥1181 px. Gra pozostaje aktywna, więc możesz od razu obserwować i testować zmiany. Ustawienia zapisują się lokalnie.</p>
       <div class="dev-layout-groups">
-        ${groups.map((group) => `<div class="dev-layout-group"><h4>${group.title}</h4>${group.items.map((raw) => controlHTML(descriptors.get(raw[0]))).join('')}</div>`).join('')}
+        ${groups.map((group) => `<section class="dev-layout-group"><h4>${group.title}</h4>${group.items.map((raw) => controlHTML(descriptors.get(raw[0]))).join('')}</section>`).join('')}
       </div>
       <textarea id="dev-layout-json" class="dev-layout-json" spellcheck="false" aria-label="DEV layout JSON"></textarea>
       <div class="dev-layout-actions">
@@ -233,31 +319,35 @@
         <button type="button" class="dev-danger" data-dev-action="reset">Reset DEV</button>
       </div>
       <small class="dev-layout-status" id="dev-layout-status" aria-live="polite"></small>
-    </details>`;
-    settingsGrid.appendChild(section);
-    textarea = section.querySelector('#dev-layout-json');
-    statusNode = section.querySelector('#dev-layout-status');
+    </div>`;
+    document.body.appendChild(popup);
+
+    textarea = popup.querySelector('#dev-layout-json');
+    statusNode = popup.querySelector('#dev-layout-status');
     syncControls();
 
-    section.addEventListener('input', (event) => {
+    trigger.addEventListener('click', togglePopup);
+    popup.querySelector('#dev-layout-close').addEventListener('click', closePopup);
+
+    popup.addEventListener('input', (event) => {
       const input = event.target.closest('[data-dev-key]');
       if (!input) return;
       const key = input.dataset.devKey;
       setValue(key, input.value, { save: true, sync: false });
-      section.querySelectorAll(`[data-dev-key="${key}"]`).forEach((peer) => {
+      popup.querySelectorAll(`[data-dev-key="${key}"]`).forEach((peer) => {
         if (peer !== input) peer.value = String(values[key]);
       });
       syncTextarea();
       setStatus('Zmieniono — zapisano lokalnie.');
     });
 
-    section.addEventListener('change', (event) => {
+    popup.addEventListener('change', (event) => {
       const input = event.target.closest('[data-dev-key]');
       if (!input) return;
       setValue(input.dataset.devKey, input.value);
     });
 
-    section.addEventListener('click', (event) => {
+    popup.addEventListener('click', (event) => {
       const button = event.target.closest('[data-dev-action]');
       if (!button) return;
       const action = button.dataset.devAction;
@@ -266,6 +356,13 @@
       if (action === 'refresh-json') { textarea.value = serialize(); setStatus('JSON odświeżony z bieżących wartości.'); }
       if (action === 'reset') reset();
     });
+
+    const handle = popup.querySelector('#dev-layout-drag-handle');
+    handle.addEventListener('pointerdown', startDrag);
+    handle.addEventListener('pointermove', moveDrag);
+    handle.addEventListener('pointerup', stopDrag);
+    handle.addEventListener('pointercancel', stopDrag);
+    window.addEventListener('resize', keepPopupOnScreen);
   }
 
   values = load();
@@ -280,6 +377,9 @@
     set: setValue,
     apply,
     reset,
+    open: openPopup,
+    close: closePopup,
+    toggle: togglePopup,
     exportJSON: serialize,
     importJSON,
   };
