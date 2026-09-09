@@ -49,7 +49,7 @@ jobs:
       - name: Install Playwright
         run: |
           npm install --no-save --no-package-lock playwright
-          npx playwright install --with-deps chromium
+          npx playwright install chromium
       - name: Single runtime and shared menu smoke
         run: node tests/single_runtime_smoke.mjs
       - name: Resume priority smoke
