@@ -47,6 +47,9 @@ try {
   assert.match(coachText, /Zagraj|Zrób/i, 'Polish tutorial must visibly label the recommended move');
   assert.match(coachText, /Dlaczego/i, 'Polish tutorial must visibly explain the reason');
 
+  // Geometry is a settled-layout contract; do not measure while the deal scale animation is active.
+  await page.waitForFunction(() => window.Durak.game.state.dealAnimation === false);
+  await page.waitForTimeout(40);
   const layoutBefore = await page.evaluate(() => {
     const wrap = document.querySelector('.table-wrap').getBoundingClientRect();
     const human = document.querySelector('#human-hand .card').getBoundingClientRect();
