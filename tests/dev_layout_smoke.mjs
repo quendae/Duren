@@ -51,6 +51,10 @@ try {
   await page.waitForSelector('#dev-layout-popup:not(.hidden)');
   assert.equal(await page.locator('#dev-layout-popup').getAttribute('aria-modal'), null, 'DEV popup must be non-modal');
 
+  for (const key of ['seatLeftX','seatRightX','botHandLeftX','botHandRightX','botHandTopX']) {
+    assert.equal(await page.locator(`[data-dev-key="${key}"]`).count() > 0, true, `DEV must expose ${key}`);
+  }
+
   // The game remains interactive while DEV is open.
   const beforeTableCount = await page.locator('#table-cards .card').count();
   const playable = page.locator('#human-hand .card.playable').first();
@@ -83,6 +87,25 @@ try {
   assert.equal(await page.evaluate(() => window.DurakDevLayout.values.handY), -29);
   await setNumber(page, 'handY', -35);
 
+  // Left/right seats and their hands must be independently adjustable.
+  await setNumber(page, 'seatLeftX', 83);
+  await setNumber(page, 'seatRightX', 117);
+  await setNumber(page, 'botHandLeftX', -14);
+  await setNumber(page, 'botHandRightX', 11);
+  const opponentLayout = await page.evaluate(() => ({
+    leftSeat: getComputedStyle(document.querySelector('.bot-seat.slot-left')).left,
+    rightSeat: getComputedStyle(document.querySelector('.bot-seat.slot-right')).right,
+    leftHandTransform: getComputedStyle(document.querySelector('.bot-seat.slot-left .bot-hand')).transform,
+    rightHandTransform: getComputedStyle(document.querySelector('.bot-seat.slot-right .bot-hand')).transform,
+    leftXVar: getComputedStyle(document.documentElement).getPropertyValue('--dev-seat-left-x').trim(),
+    rightXVar: getComputedStyle(document.documentElement).getPropertyValue('--dev-seat-right-x').trim(),
+  }));
+  assert.equal(opponentLayout.leftSeat, '83px');
+  assert.equal(opponentLayout.rightSeat, '117px');
+  assert.equal(opponentLayout.leftXVar, '83px');
+  assert.equal(opponentLayout.rightXVar, '117px');
+  assert.notEqual(opponentLayout.leftHandTransform, opponentLayout.rightHandTransform, 'left/right hand offsets must be independent');
+
   const live = await page.evaluate(() => ({
     hand: getComputedStyle(document.querySelector('#human-hand .card')).width,
     botBack: getComputedStyle(document.querySelector('.bot-hand .card-back')).width,
@@ -96,6 +119,8 @@ try {
   assert.equal(live.tableVar, '126px');
   assert.equal(live.saved.handCardW, 126, 'DEV values must persist immediately');
   assert.equal(live.saved.handY, -35);
+  assert.equal(live.saved.seatLeftX, 83);
+  assert.equal(live.saved.seatRightX, 117);
 
   await page.reload({ waitUntil:'load' });
   await startPractice(page);
@@ -107,6 +132,8 @@ try {
   assert.equal(persisted.hand, '126px', 'hand width must survive reload');
   assert.equal(persisted.botBack, '61px', 'opponent back width must survive reload');
   assert.equal(persisted.values.handY, -35);
+  assert.equal(persisted.values.seatLeftX, 83);
+  assert.equal(persisted.values.seatRightX, 117);
 
   await page.click('#dev-layout-button');
   const imported = { version:1, profile:'desktop', values:{ handCardW:118, tableCardW:118, seatSideX:52, handY:-8 } };
@@ -118,17 +145,20 @@ try {
   }));
   assert.equal(afterImport.hand, '118px', 'JSON import must apply live');
   assert.equal(afterImport.values.tableCardW, 118);
-  assert.equal(afterImport.values.seatSideX, 52);
+  assert.equal(afterImport.values.seatLeftX, 52, 'legacy seatSideX must migrate to the left seat');
+  assert.equal(afterImport.values.seatRightX, 52, 'legacy seatSideX must migrate to the right seat');
 
   await page.click('[data-dev-action="reset"]');
   const reset = await page.evaluate(() => ({
     hand: getComputedStyle(document.querySelector('#human-hand .card')).width,
     values: window.DurakDevLayout.values,
     saved: localStorage.getItem(window.DurakDevLayout.storageKey),
+    lastBotMargin: getComputedStyle(document.querySelector('.bot-hand .card-back:last-child')).marginRight,
   }));
   assert.equal(reset.hand, '102px', 'reset must restore DEV desktop defaults');
   assert.equal(reset.values.handCardW, 102);
   assert.equal(reset.values.handY, -29, 'global reset must restore standard hand Y');
+  assert.equal(reset.lastBotMargin, '0px', 'last opponent card must not keep negative overlap; hand should center on the nameplate');
   assert.equal(reset.saved, null, 'reset must remove persisted DEV override');
 
   await page.click('#dev-layout-close');
@@ -141,7 +171,7 @@ try {
   const mobileWidth = await page.evaluate(() => getComputedStyle(document.querySelector('#human-hand .card')).width);
   assert.notEqual(mobileWidth, '140px', 'desktop DEV override must not leak into smaller breakpoints');
 
-  console.log('DEV layout popup/reset smoke: PASS');
+  console.log('DEV layout popup/reset/opponent alignment smoke: PASS');
   await context.close();
 } finally {
   await browser.close();
