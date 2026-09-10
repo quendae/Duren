@@ -1,6 +1,8 @@
 (() => {
-  const STORAGE_KEY = 'duren.dev.layout.v1';
+  const STORAGE_KEY = 'duren.dev.layout.v2';
   const VERSION = 1;
+  const RELEASE = '1.0.0';
+  const DEV_UI_ENABLED = new URLSearchParams(window.location.search).get('dev') === '1';
   const root = document.documentElement;
 
   const groups = [
@@ -39,26 +41,26 @@
       title: 'Przeciwnicy',
       items: [
         ['seatTopY', 'Górna plakietka — Y', '--dev-seat-top-y', 0, 180, 1, 34],
-        ['seatSideY', 'Boczne plakietki — Y', '--dev-seat-side-y', 0, 220, 1, 34],
-        ['seatLeftX', 'Lewa plakietka — X od lewej', '--dev-seat-left-x', 0, 320, 1, 34],
-        ['seatRightX', 'Prawa plakietka — X od prawej', '--dev-seat-right-x', 0, 320, 1, 34],
+        ['seatSideY', 'Boczne plakietki — Y', '--dev-seat-side-y', 0, 220, 1, 50],
+        ['seatLeftX', 'Lewa plakietka — X od lewej', '--dev-seat-left-x', 0, 320, 1, 220],
+        ['seatRightX', 'Prawa plakietka — X od prawej', '--dev-seat-right-x', 0, 320, 1, 220],
         ['seatW', 'Szerokość plakietki', '--dev-seat-w', 150, 360, 1, 246],
         ['botHandLeftX', 'Karty lewego — X względem plakietki', '--dev-bot-hand-left-x', -180, 180, 1, 0],
         ['botHandRightX', 'Karty prawego — X względem plakietki', '--dev-bot-hand-right-x', -180, 180, 1, 0],
         ['botHandTopX', 'Karty górnego — X względem plakietki', '--dev-bot-hand-top-x', -180, 180, 1, 0],
-        ['botBackW', 'Rewers — szerokość', '--dev-bot-back-w', 24, 130, 1, 50],
-        ['botBackH', 'Rewers — wysokość', '--dev-bot-back-h', 34, 185, 1, 72],
-        ['botBackOverlap', 'Nakładanie rewersów', '--dev-bot-back-overlap', -100, 20, 1, -27],
+        ['botBackW', 'Rewers — szerokość', '--dev-bot-back-w', 24, 130, 1, 102],
+        ['botBackH', 'Rewers — wysokość', '--dev-bot-back-h', 34, 185, 1, 145],
+        ['botBackOverlap', 'Nakładanie rewersów', '--dev-bot-back-overlap', -100, 20, 1, -48],
       ],
     },
     {
       title: 'Talon i odrzut',
       items: [
-        ['stackCardW', 'Karta stosu — szerokość', '--dev-stack-card-w', 32, 130, 1, 74],
-        ['stackCardH', 'Karta stosu — wysokość', '--dev-stack-card-h', 45, 185, 1, 104],
-        ['talonX', 'Talon — X od lewej', '--dev-talon-x', 0, 360, 1, 30],
+        ['stackCardW', 'Karta stosu — szerokość', '--dev-stack-card-w', 32, 130, 1, 102],
+        ['stackCardH', 'Karta stosu — wysokość', '--dev-stack-card-h', 45, 185, 1, 145],
+        ['talonX', 'Talon — X od lewej', '--dev-talon-x', 0, 360, 1, 300],
         ['talonY', 'Talon — Y od dołu', '--dev-talon-y', 0, 180, 1, 14],
-        ['discardX', 'Odrzut — X od prawej', '--dev-discard-x', 0, 360, 1, 30],
+        ['discardX', 'Odrzut — X od prawej', '--dev-discard-x', 0, 360, 1, 300],
         ['discardY', 'Odrzut — Y od dołu', '--dev-discard-y', 0, 180, 1, 14],
       ],
     },
@@ -315,7 +317,7 @@
   }
 
   function mount() {
-    if (document.getElementById('dev-layout-popup')) return;
+    if (!DEV_UI_ENABLED || document.getElementById('dev-layout-popup')) return;
     const topActions = document.querySelector('.top-actions');
     if (!topActions) return;
 
@@ -407,11 +409,13 @@
 
   values = load();
   apply();
-  mount();
+  if (DEV_UI_ENABLED) mount();
 
   window.DurakDevLayout = {
     storageKey: STORAGE_KEY,
     version: VERSION,
+    release: RELEASE,
+    uiEnabled: DEV_UI_ENABLED,
     defaults: { ...defaults },
     get values() { return { ...values }; },
     set: setValue,
