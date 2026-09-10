@@ -40,11 +40,15 @@
       items: [
         ['seatTopY', 'Górna plakietka — Y', '--dev-seat-top-y', 0, 180, 1, 34],
         ['seatSideY', 'Boczne plakietki — Y', '--dev-seat-side-y', 0, 220, 1, 34],
-        ['seatSideX', 'Boczne plakietki — odsunięcie X', '--dev-seat-side-x', 0, 220, 1, 34],
+        ['seatLeftX', 'Lewa plakietka — X od lewej', '--dev-seat-left-x', 0, 320, 1, 34],
+        ['seatRightX', 'Prawa plakietka — X od prawej', '--dev-seat-right-x', 0, 320, 1, 34],
         ['seatW', 'Szerokość plakietki', '--dev-seat-w', 150, 360, 1, 246],
-        ['botBackW', 'Rewers — szerokość', '--dev-bot-back-w', 24, 110, 1, 50],
-        ['botBackH', 'Rewers — wysokość', '--dev-bot-back-h', 34, 160, 1, 72],
-        ['botBackOverlap', 'Nakładanie rewersów', '--dev-bot-back-overlap', -80, 20, 1, -27],
+        ['botHandLeftX', 'Karty lewego — X względem plakietki', '--dev-bot-hand-left-x', -180, 180, 1, 0],
+        ['botHandRightX', 'Karty prawego — X względem plakietki', '--dev-bot-hand-right-x', -180, 180, 1, 0],
+        ['botHandTopX', 'Karty górnego — X względem plakietki', '--dev-bot-hand-top-x', -180, 180, 1, 0],
+        ['botBackW', 'Rewers — szerokość', '--dev-bot-back-w', 24, 130, 1, 50],
+        ['botBackH', 'Rewers — wysokość', '--dev-bot-back-h', 34, 185, 1, 72],
+        ['botBackOverlap', 'Nakładanie rewersów', '--dev-bot-back-overlap', -100, 20, 1, -27],
       ],
     },
     {
@@ -52,9 +56,9 @@
       items: [
         ['stackCardW', 'Karta stosu — szerokość', '--dev-stack-card-w', 32, 130, 1, 74],
         ['stackCardH', 'Karta stosu — wysokość', '--dev-stack-card-h', 45, 185, 1, 104],
-        ['talonX', 'Talon — X od lewej', '--dev-talon-x', 0, 300, 1, 30],
+        ['talonX', 'Talon — X od lewej', '--dev-talon-x', 0, 360, 1, 30],
         ['talonY', 'Talon — Y od dołu', '--dev-talon-y', 0, 180, 1, 14],
-        ['discardX', 'Odrzut — X od prawej', '--dev-discard-x', 0, 300, 1, 30],
+        ['discardX', 'Odrzut — X od prawej', '--dev-discard-x', 0, 360, 1, 30],
         ['discardY', 'Odrzut — Y od dołu', '--dev-discard-y', 0, 180, 1, 14],
       ],
     },
@@ -102,6 +106,16 @@
     for (const descriptor of descriptors.values()) {
       if (Object.prototype.hasOwnProperty.call(source, descriptor.key)) {
         next[descriptor.key] = clampValue(descriptor, source[descriptor.key]);
+      }
+    }
+
+    // Backward compatibility with the original single side-X control.
+    if (Object.prototype.hasOwnProperty.call(source, 'seatSideX')) {
+      if (!Object.prototype.hasOwnProperty.call(source, 'seatLeftX')) {
+        next.seatLeftX = clampValue(descriptors.get('seatLeftX'), source.seatSideX);
+      }
+      if (!Object.prototype.hasOwnProperty.call(source, 'seatRightX')) {
+        next.seatRightX = clampValue(descriptors.get('seatRightX'), source.seatSideX);
       }
     }
     return next;
@@ -326,7 +340,7 @@
       <button id="dev-layout-close" type="button" aria-label="Zamknij DEV">×</button>
     </header>
     <div class="dev-layout-popup-body">
-      <p class="dev-layout-note">Sterowanie działa dla desktopu ≥1181 px. Każde ↺ przywraca standard tylko dla danego parametru. Gra pozostaje aktywna, a ustawienia zapisują się lokalnie.</p>
+      <p class="dev-layout-note">Sterowanie działa dla desktopu ≥1181 px. Każde ↺ przywraca standard tylko dla danego parametru. Pozycje lewego i prawego przeciwnika oraz ich kart można regulować niezależnie.</p>
       <div class="dev-layout-groups">
         ${groups.map((group) => `<section class="dev-layout-group"><h4>${group.title}</h4>${group.items.map((raw) => controlHTML(descriptors.get(raw[0]))).join('')}</section>`).join('')}
       </div>
