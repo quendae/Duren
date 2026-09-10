@@ -39,7 +39,7 @@ try {
       const language=document.querySelector('.menu-language')?.getBoundingClientRect();
       return {build:document.querySelector('meta[name="duren-client-build"]')?.content,card,online,language,width:innerWidth,height:innerHeight};
     });
-    assert.equal(menu.build,'20260908-single1','wrong entry-point build loaded');
+    assert.equal(menu.build,'1.0.0','wrong entry-point build loaded');
     assert.ok(menu.card && menu.card.left >= -1 && menu.card.right <= menu.width + 1,`menu overflows horizontally at ${viewport.width}x${viewport.height}`);
     assert.ok(menu.online && menu.online.height > 25,'online menu action is not reachable');
     assert.ok(menu.language && menu.language.bottom <= menu.height + 1,`language selector is outside viewport at ${viewport.width}x${viewport.height}`);
