@@ -17,8 +17,12 @@
   --dev-defense-y: 22px;
   --dev-seat-top-y: 34px;
   --dev-seat-side-y: 34px;
-  --dev-seat-side-x: 34px;
+  --dev-seat-left-x: 34px;
+  --dev-seat-right-x: 34px;
   --dev-seat-w: 246px;
+  --dev-bot-hand-left-x: 0px;
+  --dev-bot-hand-right-x: 0px;
+  --dev-bot-hand-top-x: 0px;
   --dev-bot-back-w: 50px;
   --dev-bot-back-h: 72px;
   --dev-bot-back-overlap: -27px;
@@ -81,12 +85,21 @@
     top: var(--dev-seat-top-y) !important;
   }
   .bot-seat.slot-left {
-    left: var(--dev-seat-side-x) !important;
+    left: var(--dev-seat-left-x) !important;
     top: var(--dev-seat-side-y) !important;
   }
   .bot-seat.slot-right {
-    right: var(--dev-seat-side-x) !important;
+    right: var(--dev-seat-right-x) !important;
     top: var(--dev-seat-side-y) !important;
+  }
+  .bot-seat.slot-left .bot-hand {
+    transform: translateX(var(--dev-bot-hand-left-x)) !important;
+  }
+  .bot-seat.slot-right .bot-hand {
+    transform: translateX(var(--dev-bot-hand-right-x)) !important;
+  }
+  .bot-seat.slot-top .bot-hand {
+    transform: translateX(var(--dev-bot-hand-top-x)) !important;
   }
 
   .card-back,
@@ -103,6 +116,9 @@
     width: var(--dev-bot-back-w) !important;
     height: var(--dev-bot-back-h) !important;
     margin-right: var(--dev-bot-back-overlap) !important;
+  }
+  .bot-hand .card-back:last-child {
+    margin-right: 0 !important;
   }
   .talon-zone {
     left: var(--dev-talon-x) !important;
