@@ -16,21 +16,21 @@
   --dev-defense-x: 21px;
   --dev-defense-y: 22px;
   --dev-seat-top-y: 34px;
-  --dev-seat-side-y: 34px;
-  --dev-seat-left-x: 34px;
-  --dev-seat-right-x: 34px;
+  --dev-seat-side-y: 50px;
+  --dev-seat-left-x: 220px;
+  --dev-seat-right-x: 220px;
   --dev-seat-w: 246px;
   --dev-bot-hand-left-x: 0px;
   --dev-bot-hand-right-x: 0px;
   --dev-bot-hand-top-x: 0px;
-  --dev-bot-back-w: 50px;
-  --dev-bot-back-h: 72px;
-  --dev-bot-back-overlap: -27px;
-  --dev-stack-card-w: 74px;
-  --dev-stack-card-h: 104px;
-  --dev-talon-x: 30px;
+  --dev-bot-back-w: 102px;
+  --dev-bot-back-h: 145px;
+  --dev-bot-back-overlap: -48px;
+  --dev-stack-card-w: 102px;
+  --dev-stack-card-h: 145px;
+  --dev-talon-x: 300px;
   --dev-talon-y: 14px;
-  --dev-discard-x: 30px;
+  --dev-discard-x: 300px;
   --dev-discard-y: 14px;
   --dev-action-w: 680px;
   --dev-action-min-h: 108px;
@@ -42,7 +42,7 @@
   --dev-brand-y: 0px;
 }
 
-/* DEV geometry is intentionally desktop-only. Mobile/tablet breakpoints keep their own layout. */
+/* Dureń 1.0 desktop geometry. DEV may override these values only when explicitly enabled. */
 @media (min-width: 1181px) {
   .game-layout {
     grid-template-columns: var(--dev-sidebar-w) minmax(0,1fr) !important;
@@ -112,14 +112,31 @@
   .discard-stack {
     height: var(--dev-stack-card-h) !important;
   }
+
+  /* Opponent cards use the same 102×145 baseline as the rest of the table.
+     When a hand becomes large, only the overlap tightens automatically so the
+     fan stays readable, centered and inside both side edges. */
+  .bot-hand {
+    --bot-effective-overlap: var(--dev-bot-back-overlap);
+  }
+  .bot-hand:has(.card-back:nth-child(8)) {
+    --bot-effective-overlap: min(var(--dev-bot-back-overlap), -64px);
+  }
+  .bot-hand:has(.card-back:nth-child(10)) {
+    --bot-effective-overlap: min(var(--dev-bot-back-overlap), -70px);
+  }
+  .bot-hand:has(.card-back:nth-child(12)) {
+    --bot-effective-overlap: min(var(--dev-bot-back-overlap), -76px);
+  }
   .bot-hand .card-back {
     width: var(--dev-bot-back-w) !important;
     height: var(--dev-bot-back-h) !important;
-    margin-right: var(--dev-bot-back-overlap) !important;
+    margin-right: var(--bot-effective-overlap) !important;
   }
   .bot-hand .card-back:last-child {
     margin-right: 0 !important;
   }
+
   .talon-zone {
     left: var(--dev-talon-x) !important;
     bottom: var(--dev-talon-y) !important;
