@@ -87,16 +87,26 @@ try {
   assert.equal(await page.evaluate(() => window.DurakDevLayout.values.handY), -29);
   await setNumber(page, 'handY', -35);
 
-  // Left/right seats and their hands must be independently adjustable.
+  // A deterministic fixture proves that the CSS can independently position both side seats and their card fans.
+  await page.evaluate(() => {
+    const fixture = document.createElement('div');
+    fixture.id = 'dev-opponent-fixture';
+    fixture.style.visibility = 'hidden';
+    fixture.innerHTML = `
+      <div class="bot-seat slot-left"><div class="nameplate"></div><div class="bot-hand"><div class="card-back"></div><div class="card-back"></div></div></div>
+      <div class="bot-seat slot-right"><div class="nameplate"></div><div class="bot-hand"><div class="card-back"></div><div class="card-back"></div></div></div>`;
+    document.body.appendChild(fixture);
+  });
+
   await setNumber(page, 'seatLeftX', 83);
   await setNumber(page, 'seatRightX', 117);
   await setNumber(page, 'botHandLeftX', -14);
   await setNumber(page, 'botHandRightX', 11);
   const opponentLayout = await page.evaluate(() => ({
-    leftSeat: getComputedStyle(document.querySelector('.bot-seat.slot-left')).left,
-    rightSeat: getComputedStyle(document.querySelector('.bot-seat.slot-right')).right,
-    leftHandTransform: getComputedStyle(document.querySelector('.bot-seat.slot-left .bot-hand')).transform,
-    rightHandTransform: getComputedStyle(document.querySelector('.bot-seat.slot-right .bot-hand')).transform,
+    leftSeat: getComputedStyle(document.querySelector('#dev-opponent-fixture .bot-seat.slot-left')).left,
+    rightSeat: getComputedStyle(document.querySelector('#dev-opponent-fixture .bot-seat.slot-right')).right,
+    leftHandTransform: getComputedStyle(document.querySelector('#dev-opponent-fixture .bot-seat.slot-left .bot-hand')).transform,
+    rightHandTransform: getComputedStyle(document.querySelector('#dev-opponent-fixture .bot-seat.slot-right .bot-hand')).transform,
     leftXVar: getComputedStyle(document.documentElement).getPropertyValue('--dev-seat-left-x').trim(),
     rightXVar: getComputedStyle(document.documentElement).getPropertyValue('--dev-seat-right-x').trim(),
   }));
@@ -108,7 +118,7 @@ try {
 
   const live = await page.evaluate(() => ({
     hand: getComputedStyle(document.querySelector('#human-hand .card')).width,
-    botBack: getComputedStyle(document.querySelector('.bot-hand .card-back')).width,
+    botBack: getComputedStyle(document.querySelector('#dev-opponent-fixture .bot-hand .card-back')).width,
     handVar: getComputedStyle(document.documentElement).getPropertyValue('--dev-hand-card-w').trim(),
     tableVar: getComputedStyle(document.documentElement).getPropertyValue('--dev-table-card-w').trim(),
     saved: JSON.parse(localStorage.getItem(window.DurakDevLayout.storageKey)).values,
@@ -126,11 +136,10 @@ try {
   await startPractice(page);
   const persisted = await page.evaluate(() => ({
     hand: getComputedStyle(document.querySelector('#human-hand .card')).width,
-    botBack: getComputedStyle(document.querySelector('.bot-hand .card-back')).width,
     values: window.DurakDevLayout.values,
   }));
   assert.equal(persisted.hand, '126px', 'hand width must survive reload');
-  assert.equal(persisted.botBack, '61px', 'opponent back width must survive reload');
+  assert.equal(persisted.values.botBackW, 61, 'opponent card width setting must survive reload');
   assert.equal(persisted.values.handY, -35);
   assert.equal(persisted.values.seatLeftX, 83);
   assert.equal(persisted.values.seatRightX, 117);
@@ -149,12 +158,19 @@ try {
   assert.equal(afterImport.values.seatRightX, 52, 'legacy seatSideX must migrate to the right seat');
 
   await page.click('[data-dev-action="reset"]');
-  const reset = await page.evaluate(() => ({
-    hand: getComputedStyle(document.querySelector('#human-hand .card')).width,
-    values: window.DurakDevLayout.values,
-    saved: localStorage.getItem(window.DurakDevLayout.storageKey),
-    lastBotMargin: getComputedStyle(document.querySelector('.bot-hand .card-back:last-child')).marginRight,
-  }));
+  const reset = await page.evaluate(() => {
+    const fixture = document.createElement('div');
+    fixture.id = 'dev-reset-fixture';
+    fixture.style.visibility = 'hidden';
+    fixture.innerHTML = '<div class="bot-hand"><div class="card-back"></div><div class="card-back"></div></div>';
+    document.body.appendChild(fixture);
+    return {
+      hand: getComputedStyle(document.querySelector('#human-hand .card')).width,
+      values: window.DurakDevLayout.values,
+      saved: localStorage.getItem(window.DurakDevLayout.storageKey),
+      lastBotMargin: getComputedStyle(fixture.querySelector('.card-back:last-child')).marginRight,
+    };
+  });
   assert.equal(reset.hand, '102px', 'reset must restore DEV desktop defaults');
   assert.equal(reset.values.handCardW, 102);
   assert.equal(reset.values.handY, -29, 'global reset must restore standard hand Y');
