@@ -41,8 +41,9 @@ jobs:
           node --check mp/game.js
           node --check mp/network-server.js
           ! grep -R -E 'durniak-offline\.html|<iframe|contentWindow|contentDocument|frameWindow|RTCPeerConnection|cloudflare-signaling' index.html game.js dev-layout.js multiplayer.js mp/core.js mp/game.js mp/network-server.js
-          grep -q 'dev-layout.css?v=20260909-dev1' index.html
-          grep -q 'dev-layout.js?v=20260909-dev1' index.html
+          grep -q 'name="duren-version" content="1.0.0"' index.html
+          grep -q 'dev-layout.css?v=1.0.0' index.html
+          grep -q 'dev-layout.js?v=1.0.0' index.html
           grep -q 'wss://api.qqnd.fyi/api/v1/ws' mp/network-server.js
           grep -q "type: 'game.state.commit'" mp/network-server.js
           grep -q "type: 'game.state.publish'" mp/network-server.js
